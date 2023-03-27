@@ -6,6 +6,10 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from datetime import datetime
 import pandas as pd
 
+import re
+
+import json
+
 
 import sys
 sys.path.append('/opt/airflow/dags/parser/')
@@ -16,7 +20,7 @@ from NewBooksParser import NewBooksParser
 
 # Define a function that will read the CSV file and insert data into PostgreSQL
 def copy_data(**kwargs):
-    
+
     # Read the CSV file
     df = pd.read_csv('/books.csv')
     print(df.head())
@@ -24,7 +28,7 @@ def copy_data(**kwargs):
     postgres_hook = PostgresHook(postgres_conn_id='postgres_conn')
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
-    with open('/books.csv', 'r') as f:
+    with open('/opt/airflow/books.csv', 'r') as f:
         cursor.copy_expert('COPY books_raw FROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
@@ -33,16 +37,39 @@ def copy_data(**kwargs):
 # Define a function that will read the CSV file and insert data into PostgreSQL
 def parse_new_books_page(**kwargs):
     
+    ti = kwargs['ti']
+
     urls = [f'https://www.livelib.ru/books/novelties/listview/biglist/~{page}' for page in range(1,4)]
     links = list()
     for url in urls:
         bp = NewBooksParser(url)
         links.extend(bp.scrape_text())
 
+    ti.xcom_push(key="links_on_new_books", value=links)
+
+
+
+
+def transform_str_to_list(passed_xcom_links):
+    links = re.sub(r'\[|\]', '',re.sub(r"'", '',re.sub(r' ', '', str(passed_xcom_links))))
+    return links.split(',')
+
+
+
+def create_file_with_links_to_books(**kwargs):
+
+    ti = kwargs['ti']
+
+    links = ti.xcom_pull(key="links_on_new_books", task_ids=['parse_new_books_page'])
+
+    links = transform_str_to_list(links)
+
     for link in links:
         print(link)
 
-
+    with open(r'/opt/airflow/links.txt', 'w') as file_with_links:
+        for link in links:
+            file_with_links.write(f"{link}\n")
 
 
 with DAG(
@@ -51,7 +78,7 @@ with DAG(
     schedule_interval=None
 ) as dag:
 
-    """  create_table_books_raw_task = PostgresOperator(
+    """ create_table_books_raw_task = PostgresOperator(
         task_id='create_table_books_raw',
         postgres_conn_id='postgres_conn',
         sql='''
@@ -77,6 +104,11 @@ with DAG(
             Edition VARCHAR
         )
         '''
+    ) 
+
+    copy_data_from_csv_to_books_raw_task = PythonOperator(
+        task_id='copy_data_from_csv_to_books_raw',
+        python_callable=copy_data
     ) """
 
     parse_new_books_page_task = PythonOperator(
@@ -84,12 +116,12 @@ with DAG(
         python_callable=parse_new_books_page
     )
 
-    """ copy_data_from_csv_to_books_raw_task = PythonOperator(
-        task_id='copy_data_from_csv_to_books_raw',
-        python_callable=copy_data
+
+    create_file_with_links_to_books_task = PythonOperator(
+        task_id='create_file_with_links_to_books',
+        python_callable=create_file_with_links_to_books
     )
- """
 
     # Define the dependencies
-    parse_new_books_page_task 
+    parse_new_books_page_task >> create_file_with_links_to_books_task
     #>> create_table_books_raw_task >> copy_data_from_csv_to_books_raw_task
