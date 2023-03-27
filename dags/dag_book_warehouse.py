@@ -15,6 +15,7 @@ from billiard import Pool
 import sys
 sys.path.append('/opt/airflow/dags/parser/')
 from NewBooksParser import NewBooksParser
+from BookParser import BookParser
 
 # Define the DAG
 
@@ -58,12 +59,12 @@ def parse(url):
         pass
 
 
-def parse_new_books_from_file(**kwargs):
+def fetch_books_from_new_books_page(**kwargs):
     links_books = '/opt/airflow/links.txt'
     target = '/opt/airflow/books.csv'
 
     urls = []
-    with open(filename) as f:
+    with open(links_books) as f:
         urls = f.read().splitlines()
 
     with Pool(processes=4) as pool:
@@ -156,6 +157,11 @@ with DAG(
         python_callable=create_file_with_links_to_books
     )
 
+    fetch_books_from_new_books_page_task = PythonOperator(
+        task_id='fetch_books_from_new_books_page',
+        python_callable=fetch_books_from_new_books_page
+    )
+
     # Define the dependencies
-    parse_new_books_page_task >> create_file_with_links_to_books_task
+    parse_new_books_page_task >> create_file_with_links_to_books_task >> fetch_books_from_new_books_page_task
     #>> create_table_books_raw_task >> copy_data_from_csv_to_books_raw_task
