@@ -10,6 +10,7 @@ import re
 
 import json
 
+from billiard import Pool
 
 import sys
 sys.path.append('/opt/airflow/dags/parser/')
@@ -47,6 +48,39 @@ def parse_new_books_page(**kwargs):
 
     ti.xcom_push(key="links_on_new_books", value=links)
 
+def parse(url):
+    bp = BookParser(url)
+    try:
+        df = bp.scrape_text()
+        ret_array = df.loc[0, :].values.tolist()
+        return [ret_array]
+    except IndexError:
+        pass
+
+
+def parse_new_books_from_file(**kwargs):
+    links_books = '/opt/airflow/links.txt'
+    target = '/opt/airflow/books.csv'
+
+    urls = []
+    with open(filename) as f:
+        urls = f.read().splitlines()
+
+    with Pool(processes=4) as pool:
+        data_list = []
+        for data in pool.imap_unordered(parse, urls):
+            try:
+                data_list.extend(data)
+            except (IndexError, TypeError):
+                continue
+
+    df = pd.DataFrame(data_list, columns=['BookTitle', 'Author', 'ISBN', 'EditionYear', 'Pages', 'Size',
+                                         'CoverType', 'Language', 'CopiesIssued', 'AgeRestrictions',
+                                         'Genres', 'TranslatorName', 'Rating', 'HaveRead', 'Planned',
+                                         'Reviews', 'Quotes', 'Series', 'Edition'])
+    print(df.shape)
+    print(df.sample(15).to_string())
+    df.to_csv(target, encoding='utf-8-sig', index=False)
 
 
 

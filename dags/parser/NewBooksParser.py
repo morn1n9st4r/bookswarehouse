@@ -18,5 +18,5 @@ class NewBooksParser:
 
         # scrape hrefs of books from new books page
         mylinks = soup.find_all("a", {"class": "book-item__link"})
-        mylinks_hrefs = [f"www.livelib.ru{link['href']}" for link in mylinks]
+        mylinks_hrefs = [f"https://www.livelib.ru{link['href']}" for link in mylinks]
         return mylinks_hrefs
