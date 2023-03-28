@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
 from airflow.operators.postgres_operator import PostgresOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
@@ -75,13 +76,13 @@ def fetch_books_from_new_books_page(**kwargs):
             except (IndexError, TypeError):
                 continue
 
-    df = pd.DataFrame(data_list, columns=['BookTitle', 'Author', 'ISBN', 'EditionYear', 'Pages', 'Size',
+    df = pd.DataFrame(data_list, columns=['ID', 'BookTitle', 'Author', 'AuthorID', 'ISBN', 'EditionYear', 'Pages', 'Size',
                                          'CoverType', 'Language', 'CopiesIssued', 'AgeRestrictions',
                                          'Genres', 'TranslatorName', 'Rating', 'HaveRead', 'Planned',
                                          'Reviews', 'Quotes', 'Series', 'Edition'])
     print(df.shape)
     print(df.sample(15).to_string())
-    df.to_csv(target, encoding='utf-8-sig', index=False)
+    df.to_csv(target, encoding='utf-8-sig', index=False, header=False)
 
 
 
@@ -113,13 +114,15 @@ with DAG(
     schedule_interval=None
 ) as dag:
 
-    """ create_table_books_raw_task = PostgresOperator(
+    create_table_books_raw_task = PostgresOperator(
         task_id='create_table_books_raw',
         postgres_conn_id='postgres_conn',
         sql='''
         CREATE TABLE IF NOT EXISTS books_raw (
+            ID VARCHAR PRIMARY KEY,
             BookTitle VARCHAR,
             Author VARCHAR,
+            AuthorID VARCHAR,
             ISBN VARCHAR,
             EditionYear VARCHAR,
             Pages VARCHAR,
@@ -144,7 +147,7 @@ with DAG(
     copy_data_from_csv_to_books_raw_task = PythonOperator(
         task_id='copy_data_from_csv_to_books_raw',
         python_callable=copy_data
-    ) """
+    ) 
 
     parse_new_books_page_task = PythonOperator(
         task_id='parse_new_books_page',
@@ -162,6 +165,17 @@ with DAG(
         python_callable=fetch_books_from_new_books_page
     )
 
+    remove_txt_with_links_task = BashOperator(
+        task_id='remove_txt_with_links',
+        bash_command="rm /opt/airflow/links.txt",
+    )
+
+    remove_csv_with_books_task = BashOperator(
+        task_id='remove_csv_with_books',
+        bash_command="rm /opt/airflow/books.csv",
+    )
+
     # Define the dependencies
-    parse_new_books_page_task >> create_file_with_links_to_books_task >> fetch_books_from_new_books_page_task
-    #>> create_table_books_raw_task >> copy_data_from_csv_to_books_raw_task
+    parse_new_books_page_task >> create_file_with_links_to_books_task >> fetch_books_from_new_books_page_task >> create_table_books_raw_task >> copy_data_from_csv_to_books_raw_task
+    copy_data_from_csv_to_books_raw_task >> remove_txt_with_links_task
+    copy_data_from_csv_to_books_raw_task >> remove_csv_with_books_task

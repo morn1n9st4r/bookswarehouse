@@ -5,23 +5,19 @@ import re
 
 
 class BookParser:
-    """
-        BookParser class if created to parse book page on LiveLib website.
-        Next features are being scraped (if present on page, None if not):
-            BookTitle, Author, ISBN,
-            EditionYear, Pages, CopiesIssued,
-            AgeRestrictions, Genres,
-            TranslatorName,
-            Rating,
-            HaveRead, Planned, Reviews, Quotes,
-            Series, Edition
-        Attributes:
-            url: A string url to book.
-            userAgent: A string identification of application for server.
-    """
 
     def __init__(self, url,
                  userAgent='APIs-Google (+https://developers.google.com/webmasters/APIs-Google.html)'):
+        
+                
+        """
+        Constructor method for NewBooksParser class.
+
+        Parameters:
+        url (str): The url of the webpage to scrape.
+        userAgent (str): The user agent string to use in the request headers. Defaults to a Google API user agent.
+        """
+        
         self.url = url
         self.userAgent = userAgent
 
@@ -32,6 +28,11 @@ class BookParser:
 
         # scrape some particular areas of page
 
+        book_id=  re.sub(r'-.*', '', re.sub(r'https\:\/\/www\.livelib\.ru\/book\/', '', self.url))
+        autor_link = soup.find_all("a", {"class": "bc-author__link"})[0]['href']
+        autor_id = re.sub(r'-.*', '',re.sub(r'\/author\/', '', autor_link))
+        
+
         h1_title = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('h1.bc__book-title')[0].get_text().strip()))
         h2_author = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('h2.bc-author')[0].get_text().strip()))
         bc_info = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('div.bc-info')[0].get_text().strip()))
@@ -39,10 +40,12 @@ class BookParser:
         bc_stat = re.sub(' +', '', re.sub('\n+', '\n', soup.select('div.bc-stat')[0].get_text().strip()))
         bc_edition = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('table.bc-edition')[0].get_text().strip()))
 
-        return self.aquire_df_from_book(h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition)
+        return self.aquire_df_from_book(book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition)
 
-    def aquire_df_from_book(self, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition):
-        return pd.concat([self.parse_title_and_author(h1_title, h2_author),
+    def aquire_df_from_book(self,book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition):
+        return pd.concat([pd.DataFrame(data={'ID' : [book_id]}),
+                          self.parse_title_and_author(h1_title, h2_author),
+                          pd.DataFrame(data={'AuthorID' : [autor_id]}),
                           self.parse_info(bc_info),
                           self.parse_rating(bc_rating),
                           self.parse_stat(bc_stat),
