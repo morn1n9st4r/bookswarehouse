@@ -8,10 +8,27 @@ import re
 class NewBooksParser:
     def __init__(self, url,
                  userAgent='APIs-Google (+https://developers.google.com/webmasters/APIs-Google.html)'):
+        
+        """
+        Constructor method for NewBooksParser class.
+
+        Parameters:
+        url (str): The url of the webpage to scrape.
+        userAgent (str): The user agent string to use in the request headers. Defaults to a Google API user agent.
+        """
+        
         self.url = url
         self.userAgent = userAgent
 
     def scrape_text(self):
+
+        """
+        Method that scrapes the links to individual book pages from the new books page.
+
+        Returns:
+        list: A list of strings containing the hrefs of the individual book pages.
+        """ 
+
         req = Request(self.url, headers={'User-Agent': self.userAgent})
         html = urlopen(req).read().decode('utf-8')
         soup = BeautifulSoup(html, "html.parser")
