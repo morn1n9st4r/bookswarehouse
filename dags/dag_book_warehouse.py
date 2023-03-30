@@ -59,7 +59,7 @@ def parse_new_books_page(**kwargs):
 
 def transform_str_to_list(passed_xcom_links):
     links = re.sub(r'\[|\]', '',re.sub(r"'", '',re.sub(r' ', '', str(passed_xcom_links))))
-    return links.split(',')
+    return list(set(links.split(',')))
 
 
 def create_file_with_links_on_books(**kwargs):
@@ -324,7 +324,6 @@ with DAG(
         '''
     ) 
 
-    #!!!!
     dummy_task_join = DummyOperator(
         task_id = 'dummy_join_books_n_authors'
     )
