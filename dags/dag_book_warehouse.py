@@ -22,16 +22,25 @@ from AuthorParser import AuthorParser
 
 
 # Define a function that will read the CSV file and insert data into PostgreSQL
-def copy_data(**kwargs):
+def copy_data_to_books_staging(**kwargs):
     # Read the CSV file
-    df = pd.read_csv('/books.csv')
-    #print(df.head())
     
     postgres_hook = PostgresHook(postgres_conn_id='postgres_conn')
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
     with open('/opt/airflow/books.csv', 'r') as f:
         cursor.copy_expert('COPY books_staging FROM STDIN WITH (FORMAT CSV)', f)
+    connection.commit()
+
+
+def copy_data_to_authors_staging(**kwargs):
+    # Read the CSV file
+    
+    postgres_hook = PostgresHook(postgres_conn_id='postgres_conn')
+    connection = postgres_hook.get_conn()
+    cursor = connection.cursor()
+    with open('/opt/airflow/authors.csv', 'r') as f:
+        cursor.copy_expert('COPY authors_staging FROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
 
@@ -179,21 +188,42 @@ def get_sql_create_books_table(phase):
         '''
     return sql
 
+def get_sql_create_authors_table(phase):
+    sql = sql=f'''
+            CREATE TABLE IF NOT EXISTS authors_{phase}(
+            AuthorID VARCHAR PRIMARY KEY,
+            Name VARCHAR,
+            OriginalName VARCHAR,
+            Liked VARCHAR,
+            Neutral VARCHAR,
+            Disliked VARCHAR,
+            Favorite VARCHAR,
+            Reading VARCHAR
+        )
+        '''
+    return sql
+
 with DAG(
     'copy_data_to_postgres',
     start_date=datetime(2023, 3, 21),
     schedule_interval=None
 ) as dag:
 
-    #!!!!
-    empty_staging_books_table_task = DummyOperator(
-        task_id = 'empty_staging_books_table'
-    )
+    empty_staging_books_table_task = PostgresOperator(
+        task_id='empty_staging_books_table',
+        postgres_conn_id='postgres_conn',
+        sql= '''
+            TRUNCATE TABLE books_staging;
+        '''
+    ) 
 
-    #!!!!
-    empty_staging_authors_table_task = DummyOperator(
-        task_id = 'empty_staging_authors_table'
-    )
+    empty_staging_authors_table_task = PostgresOperator(
+        task_id='empty_staging_authors_table',
+        postgres_conn_id='postgres_conn',
+        sql= '''
+            TRUNCATE TABLE authors_staging;
+        '''
+    ) 
 
     create_table_books_staging_task = PostgresOperator(
         task_id='create_table_books_staging',
@@ -207,15 +237,19 @@ with DAG(
         sql = get_sql_create_books_table('raw')
     ) 
 
-    #!!!!
-    dummy_move_books_to_raw_task = DummyOperator(
-        task_id = 'dummy_move_books_to_raw'
-    )
-
+    move_books_to_raw_task = PostgresOperator(
+        task_id='move_books_to_raw',
+        postgres_conn_id='postgres_conn',
+        sql = '''
+            INSERT INTO books_raw
+            SELECT * FROM books_staging 
+            ON CONFLICT DO NOTHING;
+        '''
+    ) 
 
     copy_data_from_csv_to_books_staging_task = PythonOperator(
         task_id='copy_data_from_csv_to_books_staging',
-        python_callable=copy_data
+        python_callable=copy_data_to_books_staging
     ) 
 
     parse_new_books_page_task = PythonOperator(
@@ -243,18 +277,18 @@ with DAG(
         bash_command="rm /opt/airflow/books.csv",
     )
 
-    remove_authors_txt_task = DummyOperator(
+    remove_authors_txt_task = BashOperator(
         task_id='remove_authors_txt',
         bash_command="rm /opt/airflow/authors.txt",
     )
 
-    remove_authors_csv_task = DummyOperator(
+    remove_authors_csv_task = BashOperator(
         task_id='remove_authors_csv',
         bash_command="rm /opt/airflow/authors.csv",
     )
 
     create_file_with_links_on_authors_task = PythonOperator(
-        task_id='create_file_with_links_on_authors',
+        task_id='create_txt_file_with_links_on_authors',
         python_callable=create_file_with_links_on_authors
     )
 
@@ -263,22 +297,32 @@ with DAG(
         python_callable=fetch_authors_from_authors_txt
     )
 
-    #!!!!
-    dummy_copy_data_from_csv_to_author_staging_task = DummyOperator(
-        task_id = 'dummy_copy_data_from_csv_to_author_staging'
+    copy_data_from_csv_to_author_staging_task = PythonOperator(
+        task_id='copy_data_from_csv_to_author_staging_task',
+        python_callable=copy_data_to_authors_staging
+    ) 
+
+    create_staging_table_for_authors_task = PostgresOperator(
+        task_id='create_staging_table_for_authors',
+        postgres_conn_id='postgres_conn',
+        sql = get_sql_create_authors_table('staging')
+    ) 
+
+    create_raw_table_for_authors_task = PostgresOperator(
+        task_id='create_raw_table_for_authors_task',
+        postgres_conn_id='postgres_conn',
+        sql = get_sql_create_authors_table('raw')
     )
 
-    #!!!!
-    dummy_create_staging_table_for_authors_task = DummyOperator(
-        task_id = 'dummy_create_staging_table_for_authors'
-    )
-    dummy_create_raw_table_for_authors_task= DummyOperator(
-        task_id = 'dummy_create_raw_table_for_authors'
-    )
-    #!!!!
-    dummy_move_from_staging_to_raw_task = DummyOperator(
-        task_id = 'dummy_move_from_staging_to_raw'
-    )
+    move_authors_from_staging_to_raw_task = PostgresOperator(
+        task_id='move_authors_from_staging_to_raw',
+        postgres_conn_id='postgres_conn',
+        sql = '''
+            INSERT INTO authors_raw
+            SELECT * FROM authors_staging 
+            ON CONFLICT DO NOTHING;
+        '''
+    ) 
 
     #!!!!
     dummy_task_join = DummyOperator(
@@ -290,15 +334,14 @@ with DAG(
     parse_new_books_page_task >> create_file_with_links_on_books_task >> fetch_books_from_books_txt_task
     copy_data_from_csv_to_books_staging_task >> dummy_task_join
     
-    #
-    copy_data_from_csv_to_books_staging_task >> dummy_move_books_to_raw_task
+    copy_data_from_csv_to_books_staging_task >> move_books_to_raw_task
     
     fetch_books_from_books_txt_task >> create_table_books_staging_task >> empty_staging_books_table_task >> copy_data_from_csv_to_books_staging_task 
     fetch_books_from_books_txt_task >> create_table_books_raw_task >> copy_data_from_csv_to_books_staging_task 
     
-    fetch_books_from_books_txt_task >> create_file_with_links_on_authors_task >> fetch_authors_from_authors_txt_task >> dummy_create_staging_table_for_authors_task >> empty_staging_authors_table_task >> dummy_copy_data_from_csv_to_author_staging_task >> dummy_task_join
-    fetch_authors_from_authors_txt_task >> dummy_create_raw_table_for_authors_task >> dummy_copy_data_from_csv_to_author_staging_task
-    dummy_copy_data_from_csv_to_author_staging_task >> dummy_move_from_staging_to_raw_task
+    fetch_books_from_books_txt_task >> create_file_with_links_on_authors_task >> fetch_authors_from_authors_txt_task >> create_staging_table_for_authors_task >> empty_staging_authors_table_task >> copy_data_from_csv_to_author_staging_task >> dummy_task_join
+    fetch_authors_from_authors_txt_task >> create_raw_table_for_authors_task >> copy_data_from_csv_to_author_staging_task
+    copy_data_from_csv_to_author_staging_task >> move_authors_from_staging_to_raw_task
 
 
     dummy_task_join >> remove_txt_with_links_task
