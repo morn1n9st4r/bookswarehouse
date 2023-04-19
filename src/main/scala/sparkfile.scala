@@ -1,9 +1,11 @@
-import org.apache.spark.sql.{SparkSession, DataFrame}
+import org.apache.spark.sql.{SparkSession, Encoder, Encoders}
 import org.apache.spark.sql.types.{StructType, StructField, StringType, IntegerType}
 
 
 object sparkfile {
 
+  case class Person(name: String, age: Int)
+  
   def main(args: Array[String]):Unit = {
 
     val spark = SparkSession.builder()
@@ -11,17 +13,11 @@ object sparkfile {
       .master("local[*]")
       .getOrCreate()
 
-    val schema = StructType(
-      Array(
-        StructField("name", StringType, nullable = false),
-        StructField("age", IntegerType, nullable = false)
-      )
-    )
 
-    val data = Seq(("John", 30), ("Jane", 25), ("Bob", 40))
-    val df: DataFrame = spark.createDataFrame(data).toDF(schema.fieldNames: _*)
+    val data = List(Person("John", 30), Person("Jane", 25), Person("Bob", 40))
+    import spark.implicits._
+    val df = spark.createDataset(data)
 
-    print(df)
     df.show()
     df.printSchema()
     

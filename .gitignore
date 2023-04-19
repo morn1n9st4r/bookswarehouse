@@ -1,0 +1,16 @@
+dags/parser/links_books.txt
+dags/parser/livelib_books.csv
+dags/parser/__pycache__
+dags/__pycache__
+logs/*
+.bloop
+.bsp
+.metals
+.vscode
+project
+target
+jars
+
+dags/groups/__pycache__
+logs
+rm.txt

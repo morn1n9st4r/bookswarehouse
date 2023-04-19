@@ -5,6 +5,4 @@ pyspark==3.3.2
 requests
 pandas
 bs4
-urllib
-re
 billiard

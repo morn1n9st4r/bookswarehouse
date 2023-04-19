@@ -2,7 +2,7 @@ FROM bitnami/spark:3.3.2
 
 USER root
 
-COPY ./dags/sparkfile.py /opt/bitnami/spark
+# COPY ./dags/dag_test_spark.py /opt/bitnami/spark
 
 COPY ./requirements.txt /
 RUN pip install -r /requirements.txt
