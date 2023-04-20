@@ -37,7 +37,7 @@ def get_sql_create_books_table(phase):
             Reviews VARCHAR,
             Quotes VARCHAR,
             Series VARCHAR,
-            Edition VARCHAR
+            PublisherID VARCHAR
         )
         '''
     return sql

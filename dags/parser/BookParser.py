@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import bs4
 from urllib.request import urlopen, Request
 import pandas as pd
 import re
@@ -11,7 +12,7 @@ class BookParser:
         
                 
         """
-        Constructor method for NewBooksParser class.
+        Constructor method for BookParser class.
 
         Parameters:
         url (str): The url of the webpage to scrape.
@@ -28,7 +29,7 @@ class BookParser:
 
         # scrape some particular areas of page
 
-        book_id=  re.sub(r'-.*', '', re.sub(r'https\:\/\/www\.livelib\.ru\/book\/', '', self.url))
+        book_id = re.sub(r'-.*', '', re.sub(r'https\:\/\/www\.livelib\.ru\/book\/', '', self.url))
         autor_link = soup.find_all("a", {"class": "bc-author__link"})[0]['href']
         autor_id = re.sub(r'-.*', '',re.sub(r'\/author\/', '', autor_link))
         
@@ -40,16 +41,16 @@ class BookParser:
         bc_stat = re.sub(' +', '', re.sub('\n+', '\n', soup.select('div.bc-stat')[0].get_text().strip()))
         bc_edition = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('table.bc-edition')[0].get_text().strip()))
 
-        return self.aquire_df_from_book(book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition)
+        return self.aquire_df_from_book(book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition, soup)
 
-    def aquire_df_from_book(self,book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition):
+    def aquire_df_from_book(self,book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition, soup):
         return pd.concat([pd.DataFrame(data={'ID' : [book_id]}),
                           self.parse_title_and_author(h1_title, h2_author),
                           pd.DataFrame(data={'AuthorID' : [autor_id]}),
                           self.parse_info(bc_info),
                           self.parse_rating(bc_rating),
                           self.parse_stat(bc_stat),
-                          self.parse_edition(bc_edition)], axis=1)
+                          self.parse_edition(bc_edition, soup)], axis=1)
 
     def parse_title_and_author(self, h1_title, h2_author):
         data = {
@@ -96,13 +97,13 @@ class BookParser:
             pattern = re.compile(regex_isbn_nums, re.UNICODE)
             isbn = pattern.findall(isbn)
         except (IndexError, TypeError):
-            isbn = 'None'
+            isbn = 'null'
 
         try:
             pattern = re.compile(regex_year, re.UNICODE)
             year = re.search(r"\d+", pattern.findall(bc_info)[0])[0]
         except (IndexError, TypeError):
-            year = 'None'
+            year = 'null'
         # pages
         # dangerous category since it could be not listed
         # need try-except clause
@@ -120,7 +121,7 @@ class BookParser:
 
             pages = re.search(r"\d+", ''.join(pages[0]))[0]
         except (IndexError, TypeError):
-            pages = 'None'
+            pages = 'null'
 
         pattern = re.compile(regex_books, re.UNICODE)
         copies = pattern.findall(bc_info)
@@ -130,7 +131,7 @@ class BookParser:
         try:
             copies = re.search(r"(\d+\s?)+", str(copies[0]))[0].strip()
         except (IndexError, TypeError):
-            copies = 'None'
+            copies = 'null'
 
         pattern = re.compile(regex_size, re.UNICODE)
         size = pattern.findall(bc_info)
@@ -139,7 +140,7 @@ class BookParser:
             size = size[0]
             size = re.sub("Формат:", "", re.sub("Возрастные ограничения: .+", "", size)).strip()
         except (IndexError, TypeError):
-            size = 'None'
+            size = 'null'
 
         pattern = re.compile(regex_cover, re.UNICODE)
         cover = pattern.findall(bc_info)
@@ -147,7 +148,7 @@ class BookParser:
         try:
             cover = re.search(r"((М|м)ягкий)|((М|м)ягкая)|((Т|т)в(е|ё)рдый)|((Т|т)в(е|ё)рдая)", str(cover[0]))[0]
         except (IndexError, TypeError):
-            cover = 'None'
+            cover = 'null'
 
         pattern = re.compile(regex_language, re.UNICODE)
         language = pattern.findall(bc_info)
@@ -155,14 +156,14 @@ class BookParser:
         try:
             language = re.search(r" .+", str(language[0]))[0].strip()
         except (IndexError, TypeError):
-            language = 'None'
+            language = 'null'
 
         pattern = re.compile(regex_restrictions, re.UNICODE)
 
         try:
             restrictions = re.search(r"\d+", pattern.findall(bc_info)[0])[0]
         except (IndexError, TypeError):
-            restrictions = 'None'
+            restrictions = 'null'
 
         pattern = re.compile(regex_genres, re.UNICODE)
         try:
@@ -173,7 +174,7 @@ class BookParser:
             genres = re.sub(u"\n", '', genres)
             genres = re.sub(r"№\d+в", '', genres)
         except (IndexError, TypeError):
-            genres = 'None'
+            genres = 'null'
         # and translator name
         # (book can be not translated)
 
@@ -183,7 +184,7 @@ class BookParser:
             translator = re.sub(r'Перевод[чик]*[и]*: ', '', translator[0]).strip()
             translator = translator.split(',')
         except (IndexError, TypeError):
-            translator = 'None'
+            translator = 'null'
 
         data = {
             'ISBN': [isbn],
@@ -216,22 +217,22 @@ class BookParser:
         try:
             have_read = splitted_stat[0]
         except (IndexError, TypeError):
-            have_read = 'None'
+            have_read = 'null'
 
         try:
             planned = splitted_stat[2]
         except (IndexError, TypeError):
-            planned = 'None'
+            planned = 'null'
 
         try:
             reviews = splitted_stat[4]
         except (IndexError, TypeError):
-            reviews = 'None'
+            reviews = 'null'
 
         try:
             quotes = splitted_stat[7]
         except (IndexError, TypeError):
-            quotes = 'None'
+            quotes = 'null'
 
         data = {
             'HaveRead': [have_read],
@@ -243,25 +244,27 @@ class BookParser:
 
         return df
 
-    def parse_edition(self, bc_edition):
+    def parse_edition(self, bc_edition, soup):
         splitted_edition = re.split("\n", re.sub(u"\xa0", '', bc_edition))
-
         try:
             series = splitted_edition[1].strip()
         except (IndexError, TypeError):
-            series = 'None'
-        # index 3 if not part of the cycle
-        # e.g. 'Game of Thrones' is part of 'Song of Fire and Ice'
-        # that's why we take index 5
+            series = 'null'
 
         try:
-            edition = splitted_edition[5] if len(splitted_edition) > 4 else splitted_edition[3]
+            edition = re.sub(r'-.*', '', re.sub(r'\/publisher\/', '', soup.findAll("a", {"class": "bc-edition__link"})[-1]['href'] or ['null']))
         except (IndexError, TypeError):
-            edition = 'None'
+            edition = 'null'
         data = {
             'Series': [series],
-            'Edition': [edition]
+            'PublisherID': [edition]
         }
         df = pd.DataFrame(data)
 
         return df
+
+    def get_text(self, val):
+        if type(val) == bs4.element.Tag:
+            return re.sub('\n+', '', val.text)
+        else: 
+            return str(*val)

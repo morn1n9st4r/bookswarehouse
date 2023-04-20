@@ -29,13 +29,13 @@ class AuthorParser:
 
         # scrape some particular areas of page
         authorid = re.sub(r'-.*', '', re.sub(r'https\:\/\/www\.livelib\.ru\/author\/', '', self.url))
-        name = soup.find("span", {"class": "header-profile-login"}) or ['None']
-        origname = soup.find("span", {"class": "header-profile-status"}) or ['None']
-        liked = soup.find("span", {"title": "Писатель понравился"}) or [0]
-        neutral = soup.find("span", {"title": "Отнеслись нейтрально"}) or [0]
-        disliked = soup.find("span", {"title": "Писатель не понравился"}) or [0]
-        favorite = soup.find("span", {"title": "Почитатели творчества"}) or [0]
-        reading = soup.find("span", {"title": "Читателей"}) or [0]
+        name = soup.find("span", {"class": "header-profile-login"}) or ['null']
+        origname = soup.find("span", {"class": "header-profile-status"}) or ['null']
+        liked = soup.find("span", {"title": "Писатель понравился"}) or ['null']
+        neutral = soup.find("span", {"title": "Отнеслись нейтрально"}) or ['null']
+        disliked = soup.find("span", {"title": "Писатель не понравился"}) or ['null']
+        favorite = soup.find("span", {"title": "Почитатели творчества"}) or ['null']
+        reading = soup.find("span", {"title": "Читателей"}) or ['null']
 
         return pd.DataFrame(
             data ={

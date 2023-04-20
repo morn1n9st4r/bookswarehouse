@@ -21,7 +21,6 @@ from NewBooksParser import NewBooksParser
 from BookParser import BookParser
 
 
-
 def parse_new_books_page(**kwargs):
     ti = kwargs['ti']
     urls = [f'https://www.livelib.ru/books/novelties/listview/biglist/~{page}' for page in range(1,4)]
@@ -78,11 +77,12 @@ def fetch_books_from_books_txt(**kwargs):
     df = pd.DataFrame(data_list, columns=['ID', 'BookTitle', 'Author', 'AuthorID', 'ISBN', 'EditionYear', 'Pages', 'Size',
                                          'CoverType', 'Language', 'CopiesIssued', 'AgeRestrictions',
                                          'Genres', 'TranslatorName', 'Rating', 'HaveRead', 'Planned',
-                                         'Reviews', 'Quotes', 'Series', 'Edition'
+                                         'Reviews', 'Quotes', 'Series', 'PublisherID'
                                         ]
                     )
     
     ti.xcom_push(key="ids_of_authors", value=df['AuthorID'].tolist())
+    ti.xcom_push(key="ids_of_publishers", value=df['PublisherID'].tolist())
     df.to_csv(target, encoding='utf-8-sig', index=False, header=False)
 
 with DAG(
