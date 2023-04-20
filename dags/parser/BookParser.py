@@ -252,7 +252,7 @@ class BookParser:
             series = 'null'
 
         try:
-            edition = re.sub(r'-.*', '', re.sub(r'\/publisher\/', '', soup.findAll("a", {"class": "bc-edition__link"})[-1]['href'] or ['null']))
+            edition = re.sub(r'-.*', '', re.sub(r'\/publisher\/', '', self.get_publisher(soup) ))
         except (IndexError, TypeError):
             edition = 'null'
         data = {
@@ -262,6 +262,13 @@ class BookParser:
         df = pd.DataFrame(data)
 
         return df
+        
+    def get_publisher(self, soup):
+        pubs = soup.findAll("a", {"class": "bc-edition__link"})
+        res = []
+        for pub in pubs:
+            if "publisher" in pub['href']:
+                return pub['href']
 
     def get_text(self, val):
         if type(val) == bs4.element.Tag:
