@@ -20,7 +20,7 @@ def copy_data_to_authors_last_parse(**kwargs):
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
     with open('/opt/airflow/authors.csv', 'r') as f:
-        cursor.copy_expert('COPY authors_last_parse FROM STDIN WITH (FORMAT CSV)', f)
+        cursor.copy_expert('COPY bronze.authors_last_parse FROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
 
@@ -77,7 +77,7 @@ def fetch_authors_from_authors_txt(**kwargs):
 
 def get_sql_create_authors_table(phase):
     sql = sql=f'''
-            CREATE TABLE IF NOT EXISTS authors_{phase}(
+            CREATE TABLE IF NOT EXISTS bronze.authors_{phase}(
             AuthorID VARCHAR PRIMARY KEY,
             Name VARCHAR,
             OriginalName VARCHAR,
@@ -104,7 +104,7 @@ def author_parsing_tasks():
             task_id='empty_last_parse_authors_table',
             postgres_conn_id='postgres_conn',
             sql= '''
-                TRUNCATE TABLE authors_last_parse;
+                TRUNCATE TABLE bronze.authors_last_parse;
             '''
         ) 
 
@@ -139,8 +139,8 @@ def author_parsing_tasks():
             task_id='move_authors_from_last_parse_to_raw',
             postgres_conn_id='postgres_conn',
             sql = '''
-                INSERT INTO authors_raw
-                SELECT * FROM authors_last_parse 
+                INSERT INTO bronze.authors_raw
+                SELECT * FROM bronze.authors_last_parse 
                 ON CONFLICT DO NOTHING;
             '''
         ) 

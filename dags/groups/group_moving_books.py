@@ -10,13 +10,13 @@ def copy_data_to_books_last_parse(**kwargs):
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
     with open('/opt/airflow/books.csv', 'r') as f:
-        cursor.copy_expert('COPY books_last_parse FROM STDIN WITH (FORMAT CSV)', f)
+        cursor.copy_expert('COPY bronze.books_last_parse FROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
 
 def get_sql_create_books_table(phase):
     sql = sql=f'''
-            CREATE TABLE IF NOT EXISTS books_{phase}(
+            CREATE TABLE IF NOT EXISTS bronze.books_{phase}(
             ID VARCHAR PRIMARY KEY,
             BookTitle VARCHAR,
             Author VARCHAR,
@@ -55,7 +55,7 @@ def books_moving_tasks():
             task_id='empty_last_parse_books_table',
             postgres_conn_id='postgres_conn',
             sql= '''
-                TRUNCATE TABLE books_last_parse;
+                TRUNCATE TABLE bronze.books_last_parse;
             '''
         ) 
 
@@ -75,8 +75,8 @@ def books_moving_tasks():
             task_id='move_books_to_raw',
             postgres_conn_id='postgres_conn',
             sql = '''
-                INSERT INTO books_raw
-                SELECT * FROM books_last_parse 
+                INSERT INTO bronze.books_raw
+                SELECT * FROM bronze.books_last_parse 
                 ON CONFLICT DO NOTHING;
             '''
         ) 
