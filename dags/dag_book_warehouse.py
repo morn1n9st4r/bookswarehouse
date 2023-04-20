@@ -14,6 +14,7 @@ from billiard import Pool
 from groups.group_cleanup import cleanup_tasks
 from groups.group_parsing_authors import author_parsing_tasks
 from groups.group_moving_books import books_moving_tasks
+from groups.group_parsing_publishers import publisher_parsing_tasks
 
 import sys
 sys.path.append('/opt/airflow/dags/parser/')
@@ -110,7 +111,9 @@ with DAG(
     cleanup = cleanup_tasks()
     move_books = books_moving_tasks()
     parse_authors = author_parsing_tasks()
+    parse_publishers = publisher_parsing_tasks()
 
     parse_new_books_page_task >> create_file_with_links_on_books_task >> fetch_books_from_books_txt_task
     fetch_books_from_books_txt_task >> move_books >> cleanup
     fetch_books_from_books_txt_task >> parse_authors >> cleanup
+    fetch_books_from_books_txt_task >> parse_publishers >> cleanup
