@@ -37,7 +37,7 @@ class PublisherParser:
         books = [book for book in books_all if book != None]
         #city = (...)
         year_all = [self.get_year_of_creation(tag) for tag in soup.findAll("p") or ['null']]
-        years = [re.sub(r"Год основания:|\\|\/|\<|\>|p|b|n|\t+|\n+|\s+", "", str(year)) for year in year_all if year != None]
+        years = [re.sub(r".+Год основания:|\\|\/|\<|\>|p|b|n|\t+|\n+|\s+", "", str(year)) for year in year_all if year != None]
         page = soup.find("a", {"class": "publisher-link"}) or ['null']
         favorite = soup.find("span", {"class": "count-in-fav"}) or ['null']
 
