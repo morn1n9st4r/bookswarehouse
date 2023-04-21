@@ -15,12 +15,12 @@ from AuthorParser import AuthorParser
 
 
 
-def copy_data_to_authors_last_parse(**kwargs):
+def copy_data_to_authors_last(**kwargs):
     postgres_hook = PostgresHook(postgres_conn_id='postgres_conn')
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
     with open('/opt/airflow/authors.csv', 'r') as f:
-        cursor.copy_expert('COPY bronze.authors_last_parse FROM STDIN WITH (FORMAT CSV)', f)
+        cursor.copy_expert('COPY bronze.authors_lastFROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
 
@@ -96,15 +96,15 @@ def author_parsing_tasks():
                    tooltip="""
                         create txt with author id's
                         parse evety author's page
-                        store in last_parse table
+                        store in lasttable
                         then append to raw table
                    """) as group:
         
-        empty_last_parse_authors_table_task = PostgresOperator(
-            task_id='empty_last_parse_authors_table',
+        empty_last_authors_table_task = PostgresOperator(
+            task_id='empty_last_authors_table',
             postgres_conn_id='postgres_conn',
             sql= '''
-                TRUNCATE TABLE bronze.authors_last_parse;
+                TRUNCATE TABLE bronze.authors_last;
             '''
         ) 
 
@@ -118,15 +118,15 @@ def author_parsing_tasks():
             python_callable=fetch_authors_from_authors_txt
         )
 
-        copy_data_from_csv_to_author_last_parse_task = PythonOperator(
-            task_id='copy_data_from_csv_to_author_last_parse_task',
-            python_callable=copy_data_to_authors_last_parse
+        copy_data_from_csv_to_author_last_task = PythonOperator(
+            task_id='copy_data_from_csv_to_author_last_task',
+            python_callable=copy_data_to_authors_last
         ) 
 
-        create_last_parse_table_for_authors_task = PostgresOperator(
-            task_id='create_last_parse_table_for_authors',
+        create_last_table_for_authors_task = PostgresOperator(
+            task_id='create_last_table_for_authors',
             postgres_conn_id='postgres_conn',
-            sql = get_sql_create_authors_table('last_parse')
+            sql = get_sql_create_authors_table('last')
         ) 
 
         create_raw_table_for_authors_task = PostgresOperator(
@@ -135,20 +135,20 @@ def author_parsing_tasks():
             sql = get_sql_create_authors_table('raw')
         )
 
-        move_authors_from_last_parse_to_raw_task = PostgresOperator(
-            task_id='move_authors_from_last_parse_to_raw',
+        move_authors_from_last_to_raw_task = PostgresOperator(
+            task_id='move_authors_from_last_to_raw',
             postgres_conn_id='postgres_conn',
             sql = '''
                 INSERT INTO bronze.authors_raw
-                SELECT * FROM bronze.authors_last_parse 
+                SELECT * FROM bronze.authors_last
                 ON CONFLICT DO NOTHING;
             '''
         ) 
 
         create_file_with_links_on_authors_task >> fetch_authors_from_authors_txt_task
 
-        fetch_authors_from_authors_txt_task >> create_last_parse_table_for_authors_task >> empty_last_parse_authors_table_task >> copy_data_from_csv_to_author_last_parse_task
-        fetch_authors_from_authors_txt_task >> create_raw_table_for_authors_task >> move_authors_from_last_parse_to_raw_task
-        copy_data_from_csv_to_author_last_parse_task >> move_authors_from_last_parse_to_raw_task
+        fetch_authors_from_authors_txt_task >> create_last_table_for_authors_task >> empty_last_authors_table_task >> copy_data_from_csv_to_author_last_task
+        fetch_authors_from_authors_txt_task >> create_raw_table_for_authors_task >> move_authors_from_last_to_raw_task
+        copy_data_from_csv_to_author_last_task >> move_authors_from_last_to_raw_task
 
         return group

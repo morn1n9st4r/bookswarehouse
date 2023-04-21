@@ -29,4 +29,13 @@ def cleanup_tasks():
             bash_command="rm /opt/airflow/authors.csv",
         )
 
+        remove_authors_txt_task = BashOperator(
+            task_id='remove_publishers_txt',
+            bash_command="rm /opt/airflow/links_on_publishers.txt",
+        )
+
+        remove_authors_csv_task = BashOperator(
+            task_id='remove_publishers_csv',
+            bash_command="rm /opt/airflow/publishers.csv",
+        )
         return group

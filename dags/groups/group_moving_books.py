@@ -5,12 +5,12 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 
-def copy_data_to_books_last_parse(**kwargs):
+def copy_data_to_books_last(**kwargs):
     postgres_hook = PostgresHook(postgres_conn_id='postgres_conn')
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
     with open('/opt/airflow/books.csv', 'r') as f:
-        cursor.copy_expert('COPY bronze.books_last_parse FROM STDIN WITH (FORMAT CSV)', f)
+        cursor.copy_expert('COPY bronze.books_lastFROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
 
@@ -46,23 +46,23 @@ def books_moving_tasks():
      with TaskGroup('store_books', 
                    tooltip="""
                         create tables for books
-                        store in last_parse table
+                        store in lasttable
                         then append to raw table
                    """) as group:
 
         
-        empty_last_parse_books_table_task = PostgresOperator(
-            task_id='empty_last_parse_books_table',
+        empty_last_books_table_task = PostgresOperator(
+            task_id='empty_last_books_table',
             postgres_conn_id='postgres_conn',
             sql= '''
-                TRUNCATE TABLE bronze.books_last_parse;
+                TRUNCATE TABLE bronze.books_last;
             '''
         ) 
 
-        create_table_books_last_parse_task = PostgresOperator(
-            task_id='create_table_books_last_parse',
+        create_table_books_last_task = PostgresOperator(
+            task_id='create_table_books_last',
             postgres_conn_id='postgres_conn',
-            sql= get_sql_create_books_table('last_parse')
+            sql= get_sql_create_books_table('last')
         ) 
 
         create_table_books_raw_task = PostgresOperator(
@@ -76,17 +76,17 @@ def books_moving_tasks():
             postgres_conn_id='postgres_conn',
             sql = '''
                 INSERT INTO bronze.books_raw
-                SELECT * FROM bronze.books_last_parse 
+                SELECT * FROM bronze.books_last
                 ON CONFLICT DO NOTHING;
             '''
         ) 
 
-        copy_data_from_csv_to_books_last_parse_task = PythonOperator(
-            task_id='copy_data_from_csv_to_books_last_parse',
-            python_callable=copy_data_to_books_last_parse
+        copy_data_from_csv_to_books_last_task = PythonOperator(
+            task_id='copy_data_from_csv_to_books_last',
+            python_callable=copy_data_to_books_last
         ) 
 
-        create_table_books_last_parse_task >>empty_last_parse_books_table_task >>copy_data_from_csv_to_books_last_parse_task >> move_books_to_raw_task
-        create_table_books_raw_task >> copy_data_from_csv_to_books_last_parse_task
+        create_table_books_last_task >>empty_last_books_table_task >>copy_data_from_csv_to_books_last_task >> move_books_to_raw_task
+        create_table_books_raw_task >> copy_data_from_csv_to_books_last_task
 
         return group
