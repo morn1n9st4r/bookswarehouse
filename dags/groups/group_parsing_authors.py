@@ -20,7 +20,7 @@ def copy_data_to_authors_last(**kwargs):
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
     with open('/opt/airflow/authors.csv', 'r') as f:
-        cursor.copy_expert('COPY bronze.authors_lastFROM STDIN WITH (FORMAT CSV)', f)
+        cursor.copy_expert('COPY bronze.authors_last FROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
 
@@ -141,7 +141,7 @@ def author_parsing_tasks():
             sql = '''
                 INSERT INTO bronze.authors_raw
                 SELECT * FROM bronze.authors_last
-                ON CONFLICT DO NOTHING;
+                ON CONFLICT (duthorid) DO NOTHING;
             '''
         ) 
 

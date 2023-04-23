@@ -144,7 +144,7 @@ def publisher_parsing_tasks():
             sql = '''
                 INSERT INTO bronze.publishers_raw
                 SELECT * FROM bronze.publishers_last 
-                ON CONFLICT DO NOTHING;
+                ON CONFLICT (publisherid) DO NOTHING;
             '''
         ) 
 

@@ -10,7 +10,7 @@ def copy_data_to_books_last(**kwargs):
     connection = postgres_hook.get_conn()
     cursor = connection.cursor()
     with open('/opt/airflow/books.csv', 'r') as f:
-        cursor.copy_expert('COPY bronze.books_lastFROM STDIN WITH (FORMAT CSV)', f)
+        cursor.copy_expert('COPY bronze.books_last FROM STDIN WITH (FORMAT CSV)', f)
     connection.commit()
 
 
@@ -77,7 +77,7 @@ def books_moving_tasks():
             sql = '''
                 INSERT INTO bronze.books_raw
                 SELECT * FROM bronze.books_last
-                ON CONFLICT DO NOTHING;
+                ON CONFLICT (id) DO NOTHING;
             '''
         ) 
 
