@@ -1,11 +1,11 @@
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.functions.{col, when, lower}
-import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.functions.{col, when, lower,avg, regexp_replace}
+import org.apache.spark.sql.types.{IntegerType, StringType, DoubleType, LongType}
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.expressions.Window
 
-object ChangeBooksTypes extends App {
+object SilverDataTransformations extends App {
 
     val spark = SparkSession.builder()
     .appName("DedublicateBooks")
@@ -52,11 +52,25 @@ object ChangeBooksTypes extends App {
         .load()
     
     val books_df = readTable("books_raw")
+    books_df.show()
 
     //replacing "null" string with actual null value (or other value when applicable)
     val dfReplaced = books_df
     .withColumn("isbn", when(col("isbn") === "['null']", null).otherwise(col("isbn")))
+    .withColumn("isbn", regexp_replace(col("isbn"), "\\[|\\]", ""))
+    .withColumn("isbn", regexp_replace(col("isbn"), "'", ""))
     .withColumn("pages", when(col("pages") === "null", null).otherwise(col("pages")))
+    .withColumn("pages", when(col("pages").isNull, avg(col("pages")).over(Window.partitionBy("publisherid"))).otherwise(col("pages")))
+    // 130x200 can be safely placed as it is standard for book size
+    // possible upgrade: depending on publisher and series set specific value
+    .withColumn("size", when(col("size") === "null", "130x200").otherwise(col("size")))
+    // this column as a lot of dirty data that sould be edited
+    .withColumn("size", regexp_replace(col("size"), "\\.|\\,|\\-|\\~|\\;|мм|mm", ""))
+    .withColumn("size", regexp_replace(col("size"), " ", ""))
+    .withColumn("size", regexp_replace(col("size"), "XХх×\\*", "x"))
+    // if value has format "paper size (cover size)" leave only cover
+    .withColumn("size", regexp_replace(col("size"), ".+\\(", ""))
+    .withColumn("size", regexp_replace(col("size"), "\\).*", ""))
     // make one standard of cover type 
     // S for soft (also used as default in case of nulls)
     // H for hard
@@ -65,15 +79,26 @@ object ChangeBooksTypes extends App {
     .withColumn("covertype", when(lower(col("covertype")) === "мягкий", "S").otherwise(col("covertype")))
     .withColumn("covertype", when(lower(col("covertype")) === "твёрдая", "H").otherwise(col("covertype")))
     .withColumn("covertype", when(lower(col("covertype")) === "твердый", "H").otherwise(col("covertype")))
+    .withColumn("covertype", when(lower(col("covertype")) === "твердая", "H").otherwise(col("covertype")))    
     .withColumn("language", when(col("language") === "null", null).otherwise(col("language")))
     .withColumn("copiesissued", when(col("copiesissued") === "null", null).otherwise(col("copiesissued")))
     // generally, books do not have age restriction, however some editions place them
     // to be safe, we could put pg13 rating
     .withColumn("agerestrictions", when(col("agerestrictions") === "null", 13).otherwise(col("agerestrictions")))
-    .withColumn("genres", when(col("genres") === "['null']", null).otherwise(col("genres")))
+    // replace null with save bet as "prose"
+    .withColumn("genres", when(col("genres") === "['null']", "Проза").otherwise(col("genres")))
+    .withColumn("genres", regexp_replace(col("genres"), "\\[|\\]", ""))
+    .withColumn("genres", regexp_replace(col("genres"), "'", ""))
     // the book might be not translated (in original language) ant there is no way to check it
     // other than using other librarie's API and check author's origin and language of book 
-    .withColumn("translatorname", when(col("translatorname") === "null", "unknown\\original").otherwise(col("translatorname")))
+    .withColumn("translatorname", when(col("translatorname") === "null", "unknown").otherwise(col("translatorname")))
+    .withColumn("translatorname", regexp_replace(col("translatorname"), "\\[|\\]", ""))
+    .withColumn("translatorname", regexp_replace(col("translatorname"), "'", ""))
+    .withColumn("translatorname", regexp_replace(col("translatorname"), " ", " "))
+    .withColumn("translatorname", regexp_replace(col("translatorname"), "\\d|\\-|стр\\.|роман", ""))
+    .withColumn("translatorname", regexp_replace(col("translatorname"), "\\sи\\s", ",\\s"))
+    // replace comma with dot in doubles
+    .withColumn("rating", regexp_replace(col("rating"), "\\,", "\\."))
     // if the book is new, we can put 0 values
     .withColumn("rating", when(col("rating") === "null", 0).otherwise(col("rating")))
     .withColumn("haveread", when(col("haveread") === "null", 0).otherwise(col("haveread")))
@@ -85,7 +110,7 @@ object ChangeBooksTypes extends App {
     .withColumn("publisherid", when(col("publisherid") === "null", null).otherwise(col("publisherid")))
 
     val dfReplacedProperTypes = dfReplaced
-        .withColumn("id",col("id").cast(IntegerType))
+        .withColumn("id",col("id").cast(LongType))
         .withColumn("booktitle",col("booktitle").cast(StringType))
         .withColumn("Author",col("Author").cast(StringType))
         .withColumn("authorid",col("authorid").cast(IntegerType))
@@ -108,4 +133,16 @@ object ChangeBooksTypes extends App {
         .withColumn("publisherid",col("publisherid").cast(IntegerType))
     
     dfReplacedProperTypes.printSchema()
+    dfReplacedProperTypes.show()
+
+    dfReplacedProperTypes.select("*").write
+        .format("jdbc")
+        .option("driver", driver)
+        .option("url", url)
+        .option("user", user)
+        .option("password", password)
+        .option("dbtable", "silver.books_typed")
+        .option("header", "true")
+        .mode(SaveMode.Overwrite)
+        .save()
 }
