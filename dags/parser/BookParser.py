@@ -83,6 +83,7 @@ class BookParser:
         regex_cover = r'(Тип обложки: .+)|(\n.+(П|п)ереплет.+)|(\n.+((О|о)бложка).+)'
 
         regex_size = r'Формат: .+'
+        regex_size_v2 = r'Размер: .+'
         regex_language = r'Язык: \n .+'
 
         regex_books = r'\bТираж.? ((\d+\s?)+|\d+)'
@@ -140,10 +141,12 @@ class BookParser:
 
         pattern = re.compile(regex_size, re.UNICODE)
         size = pattern.findall(bc_info)
-
         try:
+            if not size:
+                pattern = re.compile(regex_size_v2, re.UNICODE)
+                size = pattern.findall(bc_info)
             size = size[0]
-            size = re.sub("Формат:", "", re.sub("Возрастные ограничения: .+", "", size)).strip()
+            size = re.sub("Размер:", "", re.sub("Формат:", "", re.sub("Возрастные ограничения: .+", "", size))).strip()
         except (IndexError, TypeError):
             size = 'null'
 
