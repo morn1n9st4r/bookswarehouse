@@ -75,9 +75,10 @@ class BookParser:
         # LiveLib has no one definite standart of writing of pages
         # it could be represented in next 3 forms:
 
-        regex_pages_v1 = r'\bКоличество.страниц: \d+'
-        regex_pages_v2 = r'\bСтраниц: \d+'
-        regex_pages_v3 = r'\d+\s*стр'
+        regex_pages_v1 = r'Количество.страниц.*\d+'
+        regex_pages_v2 = r'Страниц.+\d+'
+        regex_pages_v3 = r'\d+.стр'
+        regex_pages_v4 = r'Кол-во.страниц.*\d+'
 
         regex_cover = r'(Тип обложки: .+)|(\n.+(П|п)ереплет.+)|(\n.+((О|о)бложка).+)'
 
@@ -85,7 +86,7 @@ class BookParser:
         regex_language = r'Язык: \n .+'
 
         regex_books = r'\bТираж.? ((\d+\s?)+|\d+)'
-        regex_restrictions = r'\Возрастные.ограничения: \d+'
+        regex_restrictions = r'Возрастные.ограничения: \d+'
         regex_genres = r'(?s)(?<=Жанры:).*?(?=Теги:)'
         regex_translator = r'Перевод[чик]*[и]*: .+'
 
@@ -118,6 +119,10 @@ class BookParser:
                 if not pages:
                     pattern = re.compile(regex_pages_v3, re.UNICODE)
                     pages = pattern.findall(bc_info)
+                    
+                    if not pages:
+                        pattern = re.compile(regex_pages_v4, re.UNICODE)
+                        pages = pattern.findall(bc_info)
 
             pages = re.search(r"\d+", ''.join(pages[0]))[0]
         except (IndexError, TypeError):
