@@ -1,8 +1,6 @@
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{SparkSession, SaveMode}
 import org.apache.spark.sql.functions.{col, when, lower,avg, regexp_replace}
 import org.apache.spark.sql.types.{IntegerType, StringType, DoubleType, LongType}
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.expressions.Window
 
 object SilverDataTransformations extends App {
@@ -86,7 +84,7 @@ object SilverDataTransformations extends App {
     .withColumn("publisherid", when(col("publisherid") === "null", null).otherwise(col("publisherid")))
 
     val dfReplacedProperTypes = dfReplaced
-        .withColumn("id",col("id").cast(LongType))
+        //.withColumn("id",col("id").cast(LongType))
         .withColumn("booktitle",col("booktitle").cast(StringType))
         .withColumn("Author",col("Author").cast(StringType))
         .withColumn("authorid",col("authorid").cast(IntegerType))

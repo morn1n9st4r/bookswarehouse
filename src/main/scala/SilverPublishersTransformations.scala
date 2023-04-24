@@ -36,7 +36,7 @@ object SilverPublishersTransformations extends App {
         .withColumn("books", regexp_replace(col("books"), "\\(|\\)|Книги", ""))
         .withColumn("favorite", regexp_replace(col("favorite"), "\\(|\\)", ""))
         .withColumn("favorite", when(col("favorite") === "null", 0).otherwise(col("favorite")))
-        .withColumn("publisherid",col("publisherid").cast(LongType))
+        //.withColumn("publisherid",col("publisherid").cast(LongType))
         .withColumn("name",col("name").cast(StringType))
         .withColumn("books",col("books").cast(IntegerType))
         .withColumn("years",col("years").cast(IntegerType))

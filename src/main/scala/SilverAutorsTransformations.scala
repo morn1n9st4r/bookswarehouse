@@ -35,7 +35,7 @@ object SilverAutorsTransformations extends App {
         .withColumn("disliked", when(col("disliked") === "null", 0).otherwise(col("disliked")))
         .withColumn("favorite", when(col("favorite") === "null", 0).otherwise(col("favorite")))
         .withColumn("reading", when(col("reading") === "null", 0).otherwise(col("reading")))
-        .withColumn("authorid",col("authorid").cast(LongType))
+        //.withColumn("authorid",col("authorid").cast(LongType))
         .withColumn("name",col("name").cast(StringType))
         .withColumn("originalname",col("originalname").cast(StringType))
         .withColumn("liked",col("liked").cast(IntegerType))
