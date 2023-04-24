@@ -8,33 +8,9 @@ import org.apache.spark.sql.expressions.Window
 object SilverDataTransformations extends App {
 
     val spark = SparkSession.builder()
-    .appName("DedublicateBooks")
+    .appName("Silver Books Transformations")
     .master("local[*]")
     .getOrCreate()
-
-    /*case class Book(
-        val id: Int,
-        val booktitle: String,
-        val Author: String,
-        val authorid: Int,
-        val isbn: String,
-        val editionyear: Int,
-        val pages: Int,
-        val size: String,
-        val covertype: String,
-        val language: String,
-        val copiesissued: String,
-        val agerestrictions: Int,
-        val genres: String,
-        val translatorname: String,
-        val rating: Double,
-        val haveread: Int,
-        val planned: Int,
-        val reviews: Int,
-        val quotes: Int,
-        val series: String,
-        val publisherid: Int
-    )*/
 
     val driver = "org.postgresql.Driver"
     val url = "jdbc:postgresql://172.18.0.2:5432/airflow"
@@ -55,7 +31,7 @@ object SilverDataTransformations extends App {
     books_df.show()
 
     //replacing "null" string with actual null value (or other value when applicable)
-    val dfReplaced = books_df
+    val dfReplaced = books_df.distinct()
     .withColumn("isbn", when(col("isbn") === "['null']", null).otherwise(col("isbn")))
     .withColumn("isbn", regexp_replace(col("isbn"), "\\[|\\]", ""))
     .withColumn("isbn", regexp_replace(col("isbn"), "'", ""))
@@ -141,7 +117,7 @@ object SilverDataTransformations extends App {
         .option("url", url)
         .option("user", user)
         .option("password", password)
-        .option("dbtable", "silver.books_typed")
+        .option("dbtable", "silver.books")
         .option("header", "true")
         .mode(SaveMode.Overwrite)
         .save()
