@@ -141,7 +141,7 @@ def author_parsing_tasks():
             sql = '''
                 INSERT INTO bronze.authors_raw
                 SELECT * FROM bronze.authors_last
-                ON CONFLICT (duthorid) DO NOTHING;
+                ON CONFLICT (authorid) DO NOTHING;
             '''
         ) 
 

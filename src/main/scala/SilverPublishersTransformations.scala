@@ -8,6 +8,7 @@ object SilverPublishersTransformations extends App {
     val spark = SparkSession.builder()
         .appName("Silver Publishers Transformations")
         .master("local[*]")
+        .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
     val driver = "org.postgresql.Driver"

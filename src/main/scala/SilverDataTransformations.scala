@@ -6,9 +6,10 @@ import org.apache.spark.sql.expressions.Window
 object SilverDataTransformations extends App {
 
     val spark = SparkSession.builder()
-    .appName("Silver Books Transformations")
-    .master("local[*]")
-    .getOrCreate()
+        .appName("Silver Books Transformations")
+        .master("local[*]")
+        .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
+        .getOrCreate()
 
     val driver = "org.postgresql.Driver"
     val url = "jdbc:postgresql://172.18.0.2:5432/airflow"

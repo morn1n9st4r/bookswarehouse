@@ -2,11 +2,12 @@ import org.apache.spark.sql.{SparkSession, SaveMode}
 import org.apache.spark.sql.functions.{col, when}
 import org.apache.spark.sql.types.{StringType, LongType, IntegerType}
 
-object SilverAutorsTransformations extends App {
+object SilverAuthorsTransformations extends App {
       
     val spark = SparkSession.builder()
         .appName("Silver Autors Transformations")
         .master("local[*]")
+        .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
     val driver = "org.postgresql.Driver"
