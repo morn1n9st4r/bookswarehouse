@@ -7,7 +7,7 @@ object GoldenDataTransformations extends App {
 
     val spark = SparkSession.builder()
         .appName("GoldenDataTransformations")
-        .master("local[*]")
+        .master("spark://spark:7077")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
@@ -47,29 +47,6 @@ object GoldenDataTransformations extends App {
 
     genres_table.show()
     combinations_of_books_and_genres.show()
-
-
-    genres_table.select("*").write
-        .format("jdbc")
-        .option("driver", driver)
-        .option("url", url)
-        .option("user", user)
-        .option("password", password)
-        .option("dbtable", "gold.genres")
-        .option("header", "true")
-        .mode(SaveMode.Overwrite)
-        .save()
-    
-    combinations_of_books_and_genres.select("*").write
-        .format("jdbc")
-        .option("driver", driver)
-        .option("url", url)
-        .option("user", user)
-        .option("password", password)
-        .option("dbtable", "gold.book_genre")
-        .option("header", "true")
-        .mode(SaveMode.Overwrite)
-        .save()
     
     val books_without_columns = books_df.drop("genres")
             .drop("Author")
@@ -84,6 +61,31 @@ object GoldenDataTransformations extends App {
         .option("password", password)
         .option("dbtable", "gold.books")
         .option("header", "true")
+        .option("truncate", "true")
         .mode(SaveMode.Overwrite)
         .save()
+
+    genres_table.select("*").write
+        .format("jdbc")
+        .option("driver", driver)
+        .option("url", url)
+        .option("user", user)
+        .option("password", password)
+        .option("dbtable", "gold.genres")
+        .option("header", "true")
+        .option("truncate", "true")
+        .mode(SaveMode.Overwrite)
+        .save()
+    
+    combinations_of_books_and_genres.select("*").write
+        .format("jdbc")
+        .option("driver", driver)
+        .option("url", url)
+        .option("user", user)
+        .option("password", password)
+        .option("dbtable", "gold.book_genre")
+        .option("header", "true")
+        .mode(SaveMode.Overwrite)
+        .save()
+
 }

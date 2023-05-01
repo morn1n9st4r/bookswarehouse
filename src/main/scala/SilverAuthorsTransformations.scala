@@ -1,12 +1,13 @@
 import org.apache.spark.sql.{SparkSession, SaveMode}
-import org.apache.spark.sql.functions.{col, when}
+import org.apache.spark.sql.functions.{col, when, regexp_extract}
 import org.apache.spark.sql.types.{StringType, LongType, IntegerType}
 
 object SilverAuthorsTransformations extends App {
       
     val spark = SparkSession.builder()
         .appName("Silver Autors Transformations")
-        .master("local[*]")
+        //.master("local[*]")
+        .master("spark://spark:7077")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
@@ -36,7 +37,7 @@ object SilverAuthorsTransformations extends App {
         .withColumn("disliked", when(col("disliked") === "null", 0).otherwise(col("disliked")))
         .withColumn("favorite", when(col("favorite") === "null", 0).otherwise(col("favorite")))
         .withColumn("reading", when(col("reading") === "null", 0).otherwise(col("reading")))
-        //.withColumn("authorid",col("authorid").cast(LongType))
+        .withColumn("authorid",regexp_extract(col("authorid"), "\\d+", 0).cast(IntegerType))
         .withColumn("name",col("name").cast(StringType))
         .withColumn("originalname",col("originalname").cast(StringType))
         .withColumn("liked",col("liked").cast(IntegerType))

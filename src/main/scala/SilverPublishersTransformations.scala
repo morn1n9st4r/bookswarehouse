@@ -1,5 +1,5 @@
 import org.apache.spark.sql.{SparkSession, SaveMode}
-import org.apache.spark.sql.functions.{col, when, avg, regexp_replace}
+import org.apache.spark.sql.functions.{col, when, avg, regexp_replace, regexp_extract}
 import org.apache.spark.sql.types.{StringType, LongType, IntegerType}
 import org.apache.spark.sql.expressions.Window
 
@@ -7,7 +7,7 @@ object SilverPublishersTransformations extends App {
         
     val spark = SparkSession.builder()
         .appName("Silver Publishers Transformations")
-        .master("local[*]")
+        .master("spark://spark:7077")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
@@ -37,7 +37,7 @@ object SilverPublishersTransformations extends App {
         .withColumn("books", regexp_replace(col("books"), "\\(|\\)|Книги", ""))
         .withColumn("favorite", regexp_replace(col("favorite"), "\\(|\\)", ""))
         .withColumn("favorite", when(col("favorite") === "null", 0).otherwise(col("favorite")))
-        //.withColumn("publisherid",col("publisherid").cast(LongType))
+        .withColumn("publisherid",regexp_extract(col("publisherid"), "\\d+", 0).cast(IntegerType))
         .withColumn("name",col("name").cast(StringType))
         .withColumn("books",col("books").cast(IntegerType))
         .withColumn("years",col("years").cast(IntegerType))

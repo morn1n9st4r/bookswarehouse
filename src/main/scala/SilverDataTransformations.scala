@@ -1,5 +1,5 @@
 import org.apache.spark.sql.{SparkSession, SaveMode}
-import org.apache.spark.sql.functions.{col, when, lower,avg, regexp_replace}
+import org.apache.spark.sql.functions.{col, when, lower,avg, regexp_replace, regexp_extract}
 import org.apache.spark.sql.types.{IntegerType, StringType, DoubleType, LongType}
 import org.apache.spark.sql.expressions.Window
 
@@ -7,7 +7,7 @@ object SilverDataTransformations extends App {
 
     val spark = SparkSession.builder()
         .appName("Silver Books Transformations")
-        .master("local[*]")
+        .master("spark://spark:7077")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
@@ -85,10 +85,10 @@ object SilverDataTransformations extends App {
     .withColumn("publisherid", when(col("publisherid") === "null", null).otherwise(col("publisherid")))
 
     val dfReplacedProperTypes = dfReplaced
-        //.withColumn("id",col("id").cast(LongType))
+        .withColumn("id",regexp_extract(col("id"), "\\d+", 0).cast(IntegerType))
         .withColumn("booktitle",col("booktitle").cast(StringType))
         .withColumn("Author",col("Author").cast(StringType))
-        .withColumn("authorid",col("authorid").cast(IntegerType))
+        .withColumn("authorid",regexp_extract(col("authorid"), "\\d+", 0).cast(IntegerType))
         .withColumn("isbn",col("isbn").cast(StringType))
         .withColumn("editionyear",col("editionyear").cast(IntegerType))
         .withColumn("pages",col("pages").cast(IntegerType))
@@ -102,10 +102,10 @@ object SilverDataTransformations extends App {
         .withColumn("rating",col("rating").cast(DoubleType))
         .withColumn("language",col("language").cast(StringType))
         .withColumn("planned",col("planned").cast(IntegerType))
-        .withColumn("reviews",col("reviews").cast(StringType))
+        .withColumn("reviews",col("reviews").cast(IntegerType))
         .withColumn("quotes",col("quotes").cast(IntegerType))
         .withColumn("series",col("series").cast(StringType))
-        .withColumn("publisherid",col("publisherid").cast(IntegerType))
+        .withColumn("publisherid",regexp_extract(col("publisherid"), "\\d+", 0).cast(IntegerType))
     
     dfReplacedProperTypes.printSchema()
     dfReplacedProperTypes.show()
