@@ -17,7 +17,7 @@ def copy_data_to_books_last(**kwargs):
 def get_sql_create_books_table(phase):
     sql = sql=f'''
             CREATE TABLE IF NOT EXISTS bronze.books_{phase}(
-            ID VARCHAR PRIMARY KEY,
+            ID VARCHAR PRIMARY KEY UNIQUE NOT NULL,
             BookTitle VARCHAR,
             Author VARCHAR,
             AuthorID VARCHAR,
@@ -76,7 +76,7 @@ def books_moving_tasks():
             postgres_conn_id='postgres_conn',
             sql = '''
                 INSERT INTO bronze.books_raw
-                SELECT * FROM bronze.books_last
+                SELECT distinct * FROM bronze.books_last
                 ON CONFLICT (id) DO NOTHING;
             '''
         ) 
@@ -86,7 +86,7 @@ def books_moving_tasks():
             python_callable=copy_data_to_books_last
         ) 
 
-        create_table_books_last_task >>empty_last_books_table_task >>copy_data_from_csv_to_books_last_task >> move_books_to_raw_task
+        create_table_books_last_task >>empty_last_books_table_task >> copy_data_from_csv_to_books_last_task >> move_books_to_raw_task
         create_table_books_raw_task >> copy_data_from_csv_to_books_last_task
 
         return group

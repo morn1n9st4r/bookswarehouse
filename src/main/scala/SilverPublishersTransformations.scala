@@ -30,7 +30,7 @@ object SilverPublishersTransformations extends App {
     
     publishers_df.show()
 
-    val dfReplaced = publishers_df.distinct()
+    val dfReplaced = publishers_df.dropDuplicates("publisherid")
         .withColumn("name", regexp_replace(col("name"), "\\«|\\»|Издательство", ""))
         .withColumn("years", when(col("years").isNull, avg(col("years")).over(Window.partitionBy()).cast(IntegerType)).otherwise(col("years")))
         .withColumn("page", when(col("page") === "null", "none").otherwise(col("page")))
@@ -45,7 +45,7 @@ object SilverPublishersTransformations extends App {
         .withColumn("favorite",col("favorite").cast(IntegerType))
 
     
-    dfReplaced.select("*").write
+    dfReplaced.dropDuplicates("publisherid").select("*").write
         .format("jdbc")
         .option("driver", driver)
         .option("url", url)

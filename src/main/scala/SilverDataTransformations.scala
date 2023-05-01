@@ -7,6 +7,7 @@ object SilverDataTransformations extends App {
 
     val spark = SparkSession.builder()
         .appName("Silver Books Transformations")
+        //.master("local[*]")
         .master("spark://spark:7077")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
@@ -30,7 +31,7 @@ object SilverDataTransformations extends App {
     books_df.show()
 
     //replacing "null" string with actual null value (or other value when applicable)
-    val dfReplaced = books_df.distinct()
+    val dfReplaced = books_df.dropDuplicates("id")
     .withColumn("isbn", when(col("isbn") === "['null']", null).otherwise(col("isbn")))
     .withColumn("isbn", regexp_replace(col("isbn"), "\\[|\\]", ""))
     .withColumn("isbn", regexp_replace(col("isbn"), "'", ""))
@@ -84,7 +85,7 @@ object SilverDataTransformations extends App {
     .withColumn("series", when(col("series") === "null", "Standalone").otherwise(col("series")))
     .withColumn("publisherid", when(col("publisherid") === "null", null).otherwise(col("publisherid")))
 
-    val dfReplacedProperTypes = dfReplaced
+    val dfReplacedProperTypes = dfReplaced.distinct()
         .withColumn("id",regexp_extract(col("id"), "\\d+", 0).cast(IntegerType))
         .withColumn("booktitle",col("booktitle").cast(StringType))
         .withColumn("Author",col("Author").cast(StringType))
@@ -110,7 +111,7 @@ object SilverDataTransformations extends App {
     dfReplacedProperTypes.printSchema()
     dfReplacedProperTypes.show()
 
-    dfReplacedProperTypes.select("*").write
+    dfReplacedProperTypes.dropDuplicates("id").select("*").write
         .format("jdbc")
         .option("driver", driver)
         .option("url", url)

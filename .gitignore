@@ -1,6 +1,7 @@
 dags/parser/links_books.txt
 dags/parser/livelib_books.csv
 dags/parser/__pycache__
+dags/dag_test_spark.py
 dags/__pycache__
 logs/*
 .bloop

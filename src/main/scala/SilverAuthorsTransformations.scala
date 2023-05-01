@@ -30,7 +30,7 @@ object SilverAuthorsTransformations extends App {
     
     authors_df.show()
 
-    val dfReplaced = authors_df.distinct()
+    val dfReplaced = authors_df.dropDuplicates("authorid")
         .withColumn("originalname", when(col("originalname") === "", "unknown").otherwise(col("originalname")))
         .withColumn("liked", when(col("liked") === "null", 0).otherwise(col("liked")))
         .withColumn("neutral", when(col("neutral") === "null", 0).otherwise(col("neutral")))
@@ -46,7 +46,7 @@ object SilverAuthorsTransformations extends App {
         .withColumn("favorite",col("favorite").cast(IntegerType))
         .withColumn("reading",col("reading").cast(IntegerType))
 
-    dfReplaced.select("*").write
+    dfReplaced.dropDuplicates("authorid").select("*").write
         .format("jdbc")
         .option("driver", driver)
         .option("url", url)

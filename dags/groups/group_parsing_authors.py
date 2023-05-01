@@ -78,7 +78,7 @@ def fetch_authors_from_authors_txt(**kwargs):
 def get_sql_create_authors_table(phase):
     sql = sql=f'''
             CREATE TABLE IF NOT EXISTS bronze.authors_{phase}(
-            AuthorID VARCHAR PRIMARY KEY,
+            AuthorID VARCHAR PRIMARY KEY UNIQUE NOT NULL,
             Name VARCHAR,
             OriginalName VARCHAR,
             Liked VARCHAR,
@@ -140,7 +140,7 @@ def author_parsing_tasks():
             postgres_conn_id='postgres_conn',
             sql = '''
                 INSERT INTO bronze.authors_raw
-                SELECT * FROM bronze.authors_last
+                SELECT distinct * FROM bronze.authors_last
                 ON CONFLICT (authorid) DO NOTHING;
             '''
         ) 

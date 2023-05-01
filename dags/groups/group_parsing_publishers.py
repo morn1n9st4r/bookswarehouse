@@ -83,7 +83,7 @@ def fetch_publishers_from_publishers_txt(**kwargs):
 def get_sql_create_publishers_table(phase):
     sql = sql=f'''
             CREATE TABLE IF NOT EXISTS bronze.publishers_{phase}(
-            PublisherID VARCHAR PRIMARY KEY,
+            PublisherID VARCHAR PRIMARY KEY UNIQUE NOT NULL,
             name VARCHAR,
             books VARCHAR,
             years VARCHAR,
@@ -143,7 +143,7 @@ def publisher_parsing_tasks():
             postgres_conn_id='postgres_conn',
             sql = '''
                 INSERT INTO bronze.publishers_raw
-                SELECT * FROM bronze.publishers_last 
+                SELECT distinct * FROM bronze.publishers_last 
                 ON CONFLICT (publisherid) DO NOTHING;
             '''
         ) 
