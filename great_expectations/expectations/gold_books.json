@@ -1,0 +1,104 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "gold_books",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "id",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "ids cannot be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "authorid",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "ids cannot be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "publisherid",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "ids cannot be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "editionyear",
+        "max_value": 2023,
+        "min_value": 1900
+      },
+      "meta": {
+        "notes": {
+          "content": "years between 1900 and 2023",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_distinct_values_to_be_in_set",
+      "kwargs": {
+        "column": "covertype",
+        "value_set": [
+          "H",
+          "S"
+        ]
+      },
+      "meta": {
+        "notes": {
+          "content": "only two types of cover",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_max_to_be_between",
+      "kwargs": {
+        "column": "rating",
+        "max_value": 5.0
+      },
+      "meta": {
+        "notes": {
+          "content": "all ratings should be less than 5",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {
+        "notes": {
+          "content": "id should be unique",
+          "format": "markdown"
+        }
+      }
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.16.10"
+  }
+}
