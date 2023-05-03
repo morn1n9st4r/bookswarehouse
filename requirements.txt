@@ -1,6 +1,7 @@
 python-decouple
 apache-airflow-providers-apache-spark
 apache-airflow-providers-postgres
+airflow-provider-great-expectations
 pyspark==3.3.2
 requests
 pandas
