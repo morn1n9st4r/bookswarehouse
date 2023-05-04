@@ -95,10 +95,206 @@
           "format": "markdown"
         }
       }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "editionyear",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "book must be released at some point of time",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "pages",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "every book should have pages",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "pages",
+        "max_value": 10000,
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "every book should be less that 10000 pages",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "language",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "language of the text in book should be present",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "agerestrictions",
+        "max_value": 21,
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "book should have minimal acceptable age in range less than 21 (max age of adulthood in some countries)",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "agerestrictions",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "book should have minimal acceptable age",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "haveread",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "planned",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "reviews",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "quotes",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "haveread",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "planned",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "reviews",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "quotes",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
     }
   ],
   "ge_cloud_id": null,
   "meta": {
+    "citations": [
+      {
+        "batch_request": {
+          "data_asset_name": "default_data_asset_name",
+          "data_connector_name": "default_runtime_data_connector_name",
+          "datasource_name": "pg_gold_datasource",
+          "limit": 1000
+        },
+        "citation_date": "2023-05-04T19:23:51.109537Z",
+        "comment": "Created suite added via CLI"
+      }
+    ],
     "great_expectations_version": "0.16.10"
   }
 }

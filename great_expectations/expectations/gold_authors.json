@@ -1,0 +1,165 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "gold_authors",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "authorid",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "ids cannot be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "authorid"
+      },
+      "meta": {
+        "notes": {
+          "content": "id should be unique",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "liked",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "neutral",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "disliked",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "favorite",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "reading",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "liked",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "neutral",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "disliked",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "favorite",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "reading",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.16.10"
+  }
+}

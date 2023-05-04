@@ -1,0 +1,114 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "gold_publishers",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "publisherid",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "ids cannot be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "publisherid"
+      },
+      "meta": {
+        "notes": {
+          "content": "id should be unique",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "favorite",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "favorite",
+        "min_value": 0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should be at least 0",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "books",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "books",
+        "min_value": 1
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of books publised should be at least 1",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "years",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": {
+          "content": "main stat of book should not be null",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "years",
+        "max_value": 2023,
+        "min_value": 1900
+      },
+      "meta": {
+        "notes": {
+          "content": "publisher must exist at least from 1900 and to present (2023)",
+          "format": "markdown"
+        }
+      }
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.16.10"
+  }
+}
