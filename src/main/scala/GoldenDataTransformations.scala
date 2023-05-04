@@ -7,7 +7,7 @@ object GoldenDataTransformations extends App {
 
     val spark = SparkSession.builder()
         .appName("GoldenDataTransformations")
-        .master("spark://spark:7077")
+        .master("local[*]")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 

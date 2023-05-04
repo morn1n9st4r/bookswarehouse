@@ -6,8 +6,8 @@ object SilverAuthorsTransformations extends App {
       
     val spark = SparkSession.builder()
         .appName("Silver Autors Transformations")
-        //.master("local[*]")
-        .master("spark://spark:7077")
+        .master("local[*]")
+        //.master("spark://spark:7077")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 

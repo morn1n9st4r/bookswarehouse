@@ -7,7 +7,8 @@ object SilverPublishersTransformations extends App {
         
     val spark = SparkSession.builder()
         .appName("Silver Publishers Transformations")
-        .master("spark://spark:7077")
+        .master("local[*]")
+        //.master("spark://spark:7077")
         .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
@@ -36,7 +37,7 @@ object SilverPublishersTransformations extends App {
         .withColumn("page", when(col("page") === "null", "none").otherwise(col("page")))
         .withColumn("books", regexp_replace(col("books"), "\\(|\\)|Книги", ""))
         .withColumn("favorite", regexp_replace(col("favorite"), "\\(|\\)", ""))
-        .withColumn("favorite", when(col("favorite") === "null", 0).otherwise(col("favorite")))
+        .withColumn("favorite", when(col("favorite").isNull, 0).otherwise(col("favorite")))
         .withColumn("publisherid",regexp_extract(col("publisherid"), "\\d+", 0).cast(IntegerType))
         .withColumn("name",col("name").cast(StringType))
         .withColumn("books",col("books").cast(IntegerType))
