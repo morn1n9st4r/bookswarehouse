@@ -1,9 +1,8 @@
 from airflow.utils.task_group import TaskGroup
 
-from airflow.operators.postgres_operator import PostgresOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-
 
 from billiard import Pool
 import pandas as pd
@@ -25,7 +24,7 @@ def copy_data_to_publishers_last(**kwargs):
 
 
 def transform_str_to_list(passed_xcom_links):
-    links = re.sub(r'\[|\]', '',re.sub(r"'", '',re.sub(r' ', '', str(passed_xcom_links))))
+    links = re.sub(r'\[|\]', '',re.sub(r"'", '',re.sub(r'\s', '', str(passed_xcom_links))))
     return list(set(links.split(',')))
 
 
@@ -35,7 +34,8 @@ def create_file_with_links_on_publishers(**kwargs):
     ids = transform_str_to_list(ids)
     with open(r'/opt/airflow/links_on_publishers.txt', 'w') as file_with_links:
         for id in ids:
-            file_with_links.write(f"https://www.livelib.ru/publisher/{id}\n")
+            if id != "null": 
+                file_with_links.write(f"https://www.livelib.ru/publisher/{id}\n")
 
 
 def parse_publisher(url):
@@ -55,16 +55,16 @@ def fetch_publishers_from_publishers_txt(**kwargs):
     with open(links_publishers) as f:
         urls = f.read().splitlines()
 
-    with Pool(processes=4) as pool_a:
+    with Pool(processes=4) as pool_p:
         data_list = []
-        for data in pool_a.imap_unordered(parse_publisher, urls):
+        for data in pool_p.imap_unordered(parse_publisher, urls):
             try:
                 print(data)
                 data_list.extend(data)
             except (IndexError, TypeError):
                 continue
-        pool_a.close()
-        pool_a.join()
+        pool_p.close()
+        pool_p.join()
 
     df = pd.DataFrame(data_list, columns=[
                                         'PublisherID',
@@ -75,8 +75,6 @@ def fetch_publishers_from_publishers_txt(**kwargs):
                                         'favorite'
                                         ]
                     )
-    #print(df.shape)
-    #print(df.sample(15).to_string())
     df.to_csv(target, encoding='utf-8-sig', index=False, header=False)
 
 
