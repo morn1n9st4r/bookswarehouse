@@ -93,7 +93,7 @@ def get_sql_create_publishers_table(phase):
 
 
 def publisher_parsing_tasks():
-     with TaskGroup('parse_and_store_publishers', 
+    with TaskGroup('parse_and_store_publishers', 
                    tooltip="""
                         create txt with publisher id's
                         parse evety publisher's page

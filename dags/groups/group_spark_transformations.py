@@ -6,7 +6,7 @@ from great_expectations_provider.operators.great_expectations import GreatExpect
 from groups.group_create_tables_for_gold_schema import create_and_fill_other_golden_tables_tasks
 
 def spark_transformations_tasks():
-     with TaskGroup('make_spark_transformations', 
+    with TaskGroup('make_spark_transformations',
                    tooltip="""
                         make transformations for tables
                    """) as group:

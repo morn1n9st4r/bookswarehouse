@@ -1,9 +1,8 @@
 from airflow.utils.task_group import TaskGroup
 
-from airflow.operators.postgres_operator import PostgresOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-
 
 from billiard import Pool
 import pandas as pd
@@ -35,7 +34,8 @@ def create_file_with_links_on_authors(**kwargs):
     ids = transform_str_to_list(ids)
     with open(r'/opt/airflow/links_on_authors.txt', 'w') as file_with_links:
         for id in ids:
-            file_with_links.write(f"https://www.livelib.ru/author/{id}\n")
+            if id != "null":
+                file_with_links.write(f"https://www.livelib.ru/author/{id}\n")
 
 
 def parse_author(url):
@@ -66,12 +66,11 @@ def fetch_authors_from_authors_txt(**kwargs):
         pool_a.close()
         pool_a.join()
 
-    df = pd.DataFrame(data_list, columns=['AuthorID', 'Name', 'OriginalName', 'Liked', 'Neutral',
+    df = pd.DataFrame(data_list, columns=['AuthorID', 'Name', 'OriginalName',
+                                          'Liked', 'Neutral',
                                           'Disliked', 'Favorite', 'Reading'
                                         ]
                     )
-    #print(df.shape)
-    #print(df.sample(15).to_string())
     df.to_csv(target, encoding='utf-8-sig', index=False, header=False)
 
 
@@ -92,21 +91,21 @@ def get_sql_create_authors_table(phase):
 
 
 def author_parsing_tasks():
-     with TaskGroup('parse_and_store_authors', 
+    with TaskGroup('parse_and_store_authors',
                    tooltip="""
                         create txt with author id's
                         parse evety author's page
                         store in lasttable
                         then append to raw table
                    """) as group:
-        
+
         empty_last_authors_table_task = PostgresOperator(
             task_id='empty_last_authors_table',
             postgres_conn_id='postgres_conn',
             sql= '''
                 TRUNCATE TABLE bronze.authors_last;
             '''
-        ) 
+        )
 
         create_file_with_links_on_authors_task = PythonOperator(
             task_id='create_txt_file_with_links_on_authors',
@@ -121,13 +120,13 @@ def author_parsing_tasks():
         copy_data_from_csv_to_author_last_task = PythonOperator(
             task_id='copy_data_from_csv_to_author_last_task',
             python_callable=copy_data_to_authors_last
-        ) 
+        )
 
         create_last_table_for_authors_task = PostgresOperator(
             task_id='create_last_table_for_authors',
             postgres_conn_id='postgres_conn',
             sql = get_sql_create_authors_table('last')
-        ) 
+        )
 
         create_raw_table_for_authors_task = PostgresOperator(
             task_id='create_raw_table_for_authors_task',
@@ -143,7 +142,7 @@ def author_parsing_tasks():
                 SELECT distinct * FROM bronze.authors_last
                 ON CONFLICT (authorid) DO NOTHING;
             '''
-        ) 
+        )
 
         create_file_with_links_on_authors_task >> fetch_authors_from_authors_txt_task
 

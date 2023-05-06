@@ -3,12 +3,12 @@ from airflow.utils.task_group import TaskGroup
 from airflow.operators.bash_operator import BashOperator
 
 def cleanup_tasks():
-    with TaskGroup('cleanup', 
+    with TaskGroup('cleanup',
                    tooltip="""
-                        remove .txt and .csv files 
+                        remove .txt and .csv files
                         after uploading data to tables
                    """) as group:
-        
+
         remove_txt_with_links_task = BashOperator(
             task_id='remove_txt_with_links',
             bash_command="rm /opt/airflow/links_on_books.txt",

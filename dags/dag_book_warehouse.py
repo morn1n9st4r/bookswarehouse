@@ -1,9 +1,3 @@
-from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.postgres_operator import PostgresOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-
 from datetime import datetime
 import pandas as pd
 import re
@@ -11,22 +5,29 @@ import json
 
 from billiard import Pool
 
+import sys
+sys.path.append('/opt/airflow/dags/parser/')
+from NewBooksParser import NewBooksParser
+from BookParser import BookParser
+
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+
 from groups.group_cleanup import cleanup_tasks
 from groups.group_parsing_authors import author_parsing_tasks
 from groups.group_moving_books import books_moving_tasks
 from groups.group_parsing_publishers import publisher_parsing_tasks
 from groups.group_spark_transformations import spark_transformations_tasks
 
-import sys
-sys.path.append('/opt/airflow/dags/parser/')
-from NewBooksParser import NewBooksParser
-from BookParser import BookParser
-
 
 def parse_new_books_page(**kwargs):
     ti = kwargs['ti']
-    urls = [f'https://www.livelib.ru/books/novelties/listview/biglist/~{page}' for page in range(1,4)]
-    links = list()
+    urls = [f'https://www.livelib.ru/books/novelties/listview/biglist/~{page}' 
+            for page in range(1,4)]
+    links = []
     for url in urls:
         bp = NewBooksParser(url)
         links.extend(bp.scrape_text())
@@ -71,24 +72,28 @@ def fetch_books_from_books_txt(**kwargs):
         for data in pool_b.imap_unordered(parse_book, urls):
             try:
                 data_list.extend(data)
+                # keep track of uploading progress
+                if (len(data_list) % 10 == 0):
+                    print(len(data_list))
             except (IndexError, TypeError):
                 continue
         pool_b.close()
         pool_b.join()
 
-    df = pd.DataFrame(data_list, columns=['ID', 'BookTitle', 'Author', 'AuthorID', 'ISBN', 'EditionYear', 'Pages', 'Size',
-                                         'CoverType', 'Language', 'CopiesIssued', 'AgeRestrictions',
+    df = pd.DataFrame(data_list, columns=['ID', 'BookTitle', 'Author', 'AuthorID',
+                                         'ISBN', 'EditionYear', 'Pages', 'Size',
+                                         'CoverType', 'Language', 'CopiesIssued','AgeRestrictions',
                                          'Genres', 'TranslatorName', 'Rating', 'HaveRead', 'Planned',
                                          'Reviews', 'Quotes', 'Series', 'PublisherID'
                                         ]
                     )
-    
-    ti.xcom_push(key="ids_of_authors", value=df['AuthorID'].tolist())
-    ti.xcom_push(key="ids_of_publishers", value=df['PublisherID'].tolist())
+    # use set() to remove unnecessary parsing of dublicates
+    ti.xcom_push(key="ids_of_authors", value=list(set(df['AuthorID'].tolist())))
+    ti.xcom_push(key="ids_of_publishers", value=list(set(df['PublisherID'].tolist())))
     df.to_csv(target, encoding='utf-8-sig', index=False, header=False)
 
 with DAG(
-    'copy_data_to_postgres',
+    'parse_livelib_and_store_data_to_pg',
     start_date=datetime(2023, 3, 21),
     schedule_interval=None
 ) as dag:

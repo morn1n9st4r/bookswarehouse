@@ -1,29 +1,86 @@
-from bs4 import BeautifulSoup
-import bs4
-from urllib.request import urlopen, Request
-import pandas as pd
 import re
+import pandas as pd
+from urllib.request import urlopen, Request
+import bs4
+from bs4 import BeautifulSoup
 
 
 class BookParser:
 
+    """
+    The BookParser class is used to scrape information about a book
+    from the livelib.ru website.
+
+    Attributes:
+        url (str): The url of the webpage to scrape.
+        user_agent (str): The user agent string to use in the request headers.
+
+    Methods:
+        __init__(url, 
+                 user_agent='APIs-Google \
+                    (+https://developers.google.com/webmasters/APIs-Google.html)'):
+            Initializes a new instance of the BookParser class with the specified url
+            and user agent.
+
+        scrape_text():
+            Scrapes block of information about the book from the webpage
+            and delegates another method to scrape specific information
+            and return the result as a pandas DataFrame.
+
+        aquire_df_from_book():
+            Concatenates parsed information into one pandas DataFrame.
+
+        parse_title_and_author():
+            Scrapes information about the book from the webpage and returns the result
+            as a pandas DataFrame.
+
+        parse_info():
+            Scrapes information about the book from the webpage and returns the result
+            as a pandas DataFrame.
+
+        parse_rating():
+            Scrapes information about the book from the webpage and returns the result
+            as a pandas DataFrame.
+
+        parse_stat():
+            Scrapes information about the book from the webpage and returns the result
+            as a pandas DataFrame.
+
+        parse_edition():
+            Scrapes information about the book from the webpage and returns the result
+            as a pandas DataFrame.
+
+        get_publisher():
+            Scrapes information about the book from the webpage and returns the result
+            as a pandas DataFrame.
+
+        get_text(val):
+            Utility method to extract text from a Beautiful Soup tag.
+
+    Usage:
+        parser = BookParser(url='https://www.livelib.ru/book/85378')
+        result = parser.scrape_text()
+    """
+
     def __init__(self, url,
-                 userAgent='APIs-Google (+https://developers.google.com/webmasters/APIs-Google.html)'):
-        
-                
+                 user_agent='APIs-Google \
+                    (+https://developers.google.com/webmasters/APIs-Google.html)'):
+
         """
         Constructor method for BookParser class.
 
         Parameters:
         url (str): The url of the webpage to scrape.
-        userAgent (str): The user agent string to use in the request headers. Defaults to a Google API user agent.
+        user_agent (str): The user agent string to use in the request headers.
+                         Defaults to a Google API user agent.
         """
-        
+
         self.url = url
-        self.userAgent = userAgent
+        self.user_agent = user_agent
+
 
     def scrape_text(self):
-        req = Request(self.url, headers={'User-Agent': self.userAgent})
+        req = Request(self.url, headers={'User-Agent': self.user_agent})
         html = urlopen(req).read().decode('utf-8')
         soup = BeautifulSoup(html, "html.parser")
 
@@ -32,18 +89,34 @@ class BookParser:
         book_id = re.sub(r'-.*', '', re.sub(r'https\:\/\/www\.livelib\.ru\/book\/', '', self.url))
         autor_link = soup.find_all("a", {"class": "bc-author__link"})[0]['href']
         autor_id = re.sub(r'-.*', '',re.sub(r'\/author\/', '', autor_link))
-        
 
-        h1_title = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('h1.bc__book-title')[0].get_text().strip()))
-        h2_author = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('h2.bc-author')[0].get_text().strip()))
-        bc_info = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('div.bc-info')[0].get_text().strip()))
-        bc_rating = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('div.bc-rating')[0].get_text().strip()))
-        bc_stat = re.sub(' +', '', re.sub('\n+', '\n', soup.select('div.bc-stat')[0].get_text().strip()))
-        bc_edition = re.sub(' +', ' ', re.sub('\n+', '\n', soup.select('table.bc-edition')[0].get_text().strip()))
 
-        return self.aquire_df_from_book(book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition, soup)
+        h1_title = re.sub(' +', ' ', re.sub('\n+', '\n',
+            soup.select('h1.bc__book-title')[0].get_text().strip())
+            )
+        h2_author = re.sub(' +', ' ', re.sub('\n+', '\n',
+            soup.select('h2.bc-author')[0].get_text().strip())
+            )
+        bc_info = re.sub(' +', ' ', re.sub('\n+', '\n',
+            soup.select('div.bc-info')[0].get_text().strip())
+            )
+        bc_rating = re.sub(' +', ' ', re.sub('\n+', '\n',
+            soup.select('div.bc-rating')[0].get_text().strip())
+            )
+        bc_stat = re.sub(' +', '', re.sub('\n+', '\n',
+            soup.select('div.bc-stat')[0].get_text().strip())
+            )
+        bc_edition = re.sub(' +', ' ', re.sub('\n+', '\n',
+            soup.select('table.bc-edition')[0].get_text().strip())
+            )
 
-    def aquire_df_from_book(self,book_id, autor_id, h1_title, h2_author, bc_info, bc_rating, bc_stat, bc_edition, soup):
+        return self.aquire_df_from_book(book_id, autor_id, h1_title,
+                                        h2_author, bc_info, bc_rating,
+                                        bc_stat, bc_edition, soup)
+
+    def aquire_df_from_book(self, book_id, autor_id, h1_title,
+                            h2_author, bc_info, bc_rating,
+                            bc_stat, bc_edition, soup):
         return pd.concat([pd.DataFrame(data={'ID' : [book_id]}),
                           self.parse_title_and_author(h1_title, h2_author),
                           pd.DataFrame(data={'AuthorID' : [autor_id]}),
@@ -58,12 +131,9 @@ class BookParser:
             'Author': [h2_author]
         }
         df = pd.DataFrame(data)
-
         return df
 
     def parse_info(self, bc_info):
-
-
         # first we take whole line with isbn's (one book can have few)
         # next step we take just numbers
 
@@ -133,7 +203,6 @@ class BookParser:
         copies = pattern.findall(bc_info)
 
         # same with copies numbers
-
         try:
             copies = re.search(r"(\d+\s?)+", str(copies[0]))[0].strip()
         except (IndexError, TypeError):
@@ -146,7 +215,11 @@ class BookParser:
                 pattern = re.compile(regex_size_v2, re.UNICODE)
                 size = pattern.findall(bc_info)
             size = size[0]
-            size = re.sub("Размер:", "", re.sub("Формат:", "", re.sub("Возрастные ограничения: .+", "", size))).strip()
+            size = re.sub("Размер:", "", 
+                        re.sub("Формат:", "",
+                            re.sub("Возрастные ограничения: .+", "", size)
+                            )
+                        ).strip()
         except (IndexError, TypeError):
             size = 'null'
 
@@ -154,7 +227,8 @@ class BookParser:
         cover = pattern.findall(bc_info)
 
         try:
-            cover = re.search(r"((М|м)ягкий)|((М|м)ягкая)|((Т|т)в(е|ё)рдый)|((Т|т)в(е|ё)рдая)", str(cover[0]))[0]
+            cover = re.search(r"((М|м)ягкий)|((М|м)ягкая)|((Т|т)в(е|ё)рдый)|((Т|т)в(е|ё)рдая)",
+                              str(cover[0]))[0]
         except (IndexError, TypeError):
             cover = 'null'
 
@@ -176,10 +250,10 @@ class BookParser:
         pattern = re.compile(regex_genres, re.UNICODE)
         try:
             genres = pattern.findall(bc_info)[0]
-            genres = re.sub(u"\xa0", '', genres)
-            genres = re.sub(u"\u2002", '', genres)
-            genres = re.sub(u" \n ", '', genres)
-            genres = re.sub(u"\n", '', genres)
+            genres = re.sub("\xa0", '', genres)
+            genres = re.sub("\u2002", '', genres)
+            genres = re.sub(" \n ", '', genres)
+            genres = re.sub("\n", '', genres)
             genres = re.sub(r"№\d+в", '', genres)
         except (IndexError, TypeError):
             genres = 'null'
@@ -273,13 +347,12 @@ class BookParser:
         
     def get_publisher(self, soup):
         pubs = soup.findAll("a", {"class": "bc-edition__link"})
-        res = []
         for pub in pubs:
             if "publisher" in pub['href']:
                 return pub['href']
 
     def get_text(self, val):
-        if type(val) == bs4.element.Tag:
+        if isinstance(val, bs4.element.Tag):
             return re.sub('\n+', '', val.text)
         else: 
             return str(*val)
