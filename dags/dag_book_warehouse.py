@@ -95,7 +95,8 @@ def fetch_books_from_books_txt(**kwargs):
 with DAG(
     'parse_livelib_and_store_data_to_pg',
     start_date=datetime(2023, 3, 21),
-    schedule_interval=None
+    schedule_interval="@weekly",
+    catchup=False
 ) as dag:
 
 
