@@ -1,5 +1,5 @@
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, when, split, explode, collect_set, monotonically_increasing_id}
+import org.apache.spark.sql.functions.{col, when, split, explode, collect_set, monotonically_increasing_id, lower}
 import org.apache.spark.sql.SaveMode
 
 
@@ -8,7 +8,7 @@ object GoldenDataTransformations extends App {
     val spark = SparkSession.builder()
         .appName("GoldenDataTransformations")
         .master("local[*]")
-        .config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
+        //.config("spark.jars", "/opt/airflow/jars/postgresql-42.6.0.jar")
         .getOrCreate()
 
     val driver = "org.postgresql.Driver"
@@ -29,7 +29,8 @@ object GoldenDataTransformations extends App {
     val books_df = readTable("books")
     
     val genres_with_occurences_df = books_df
-        .withColumn("genre_arr", split(col("genres"), ","))
+        .withColumn("genres", lower(col("genres")))
+        .withColumn("genre_arr", split(col("genres"), ", "))
         .select(col("id"), explode(col("genre_arr")).as("genre"))
         .groupBy("genre")
         .agg(collect_set(col("id")).as("book_ids"))
@@ -47,7 +48,7 @@ object GoldenDataTransformations extends App {
 
     genres_table.show()
     combinations_of_books_and_genres.show()
-    
+    //val genres_table_lowered = genres_table
     val books_without_columns = books_df.drop("genres")
             .drop("Author")
             .drop("translatorname")
