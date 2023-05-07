@@ -119,6 +119,7 @@ object SilverDataTransformations extends App {
         .withColumn("translatorname",col("translatorname").cast(StringType))
         .withColumn("rating",col("rating").cast(DoubleType))
         .withColumn("language",col("language").cast(StringType))
+        .withColumn("haveread",col("haveread").cast(IntegerType))
         .withColumn("planned",col("planned").cast(IntegerType))
         .withColumn("reviews",col("reviews").cast(IntegerType))
         .withColumn("quotes",col("quotes").cast(IntegerType))
