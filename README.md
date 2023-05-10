@@ -1,6 +1,5 @@
 # Description
-This repo contains a project which is used for performing analysis of the books, their authors and publishers on the popular [web-site LiveLib](https://www.livelib.ru/). Every day this pipeline parses "New Books" page and adds them, their authors and publishers to respective tables. Every table undergo specific transformations needed for downstream tasks (e.g. dashbords, recommender systems).
-
+This repository houses a project that is designed for conducting an analysis of books, their authors, and publishers on the renowned [web-site LiveLib](https://www.livelib.ru/). The project's pipeline regularly extracts information from the "New Books" page and populates relevant tables with details about the books, their authors, and publishers. These tables undergo specific transformations that are essential for subsequent tasks such as creating dashboards and developing recommender systems.
 
 # Technologies used
 The books warehouse is made from the following tools: 
@@ -13,23 +12,31 @@ The books warehouse is made from the following tools:
 * Contrainers: Docker, docker compose
 * Dashboards: Apache Superset
 
-For containers is used modified original Airflow docker compose file with two [bitnami Spark services](https://hub.docker.com/r/bitnami/spark/).
+To implement containers, a modified version of the original Airflow docker compose file is employed, which includes two [bitnami Spark services](https://hub.docker.com/r/bitnami/spark/).
 
-Modules that are used inside this pipeline are included in [requirements.txt](requirements.txt) file.
+All the necessary modules used in the pipeline are listed in the [requirements.txt](requirements.txt) file.
 
 # Architecture
 
-Everything works through Docker containers, which are running via docker compose (well, except Superset).
-
-Every day "New Books" page is parsed and links on books are aquired. After that 4 threads are parsing every book page. IDs of Authors and Publishers are passed throught XComs to different tasks and then separate parsers do the same stuff with those sections of the site.
-
-After that data is cleared and transformed several times and stored in different schemas (I decided to use medallion architecture for storing middle and final results).
-
-Before pushing data to golden schema it validated with Great Expectations. Mostly data expected to be not null and in acceptable range to track outliers.
+The book warehouse system is designed to operate seamlessly via Docker containers, utilizing docker compose to facilitate container orchestration. This allows for the system to be easily scaled, deployed, and managed, making it highly efficient and effective.
 
 ![FlowChart](images/Flow.png)
 
-From golden schema data is going to downstream users for further processing (analytics in this case). 
+Each day, the system extracts data from the "New Books" page, using the powerful parsing capabilities of BeautifulSoup4. After acquiring the links to the books, the system employs four parallel threads to simultaneously parse data from each book page, greatly reducing the time taken to complete this task.
+
+![FirstParsing](images/FirstParsing.png)
+
+The author and publisher IDs are then extracted and passed on to different tasks using XComs. The system uses separate parsers for each of these sections, ensuring that the data extraction process is highly efficient and accurate.
+
+![Parsing sections](images/ParsingBranches.png)
+
+Once the data is obtained, it undergoes a rigorous cleaning and transformation process using the powerful Apache Spark and Scala tools. This process is essential for preparing the data for downstream tasks such as creating dashboards and developing recommender systems.
+
+The system stores the data in various schemas, utilizing the medallion architecture to store intermediate and final results. 
+
+![Transformations](images/Transformations.png)
+
+Before the data is pushed to the golden schema, it is validated using Great Expectations. This ensures that the data is of the highest quality, with null values and outliers effectively identified and removed. This data validation step ensures that the downstream analytical tasks can be performed accurately and efficiently.
 
 ![Dashboards](images/dashboards.png)
 
@@ -71,8 +78,12 @@ For ensuring that transformations are successful and data doesn't contains anoma
 
 # Limitations and Future work
 
-In current state project is proof-of-concept and several aspects can be improved:
+The book warehouse project, in its current state, serves as a proof-of-concept for data extraction and analysis from LiveLib. However, there are several limitations that can be addressed in future work to further improve its capabilities.
 
-1. When parsing any type of page, check whether it is already in the database to prevent it from parsing.
-2. OR, implement SCD type 2 to store historical data to track changes in page activity.
-3. Add different parser to make DB more complex and populated (LiveLib has "Reviews", "Quotes" and "Selections" pages that could be used and tables or dimentions for Books)
+Firstly, one improvement that can be made is to check whether any type of page has already been parsed and stored in the database. This would prevent the system from unnecessarily parsing the same page multiple times, saving valuable computational resources and time.
+
+Alternatively, the implementation of a Slowly Changing Dimension (SCD) type 2 would allow for the tracking of changes in page activity over time, which would provide valuable insights into the trends and patterns in the data.
+
+Another avenue for future work would be to add different parsers to make the database more complex and populated. For example, LiveLib has additional pages such as "Reviews", "Quotes", and "Selections" that could be used to create tables or dimensions for Books. This would provide a more comprehensive view of the data and enhance the system's ability to perform downstream tasks, such as creating dashboards and developing recommender systems.
+
+Overall, while the book warehouse project represents an excellent starting point, there are several areas for future work that can be explored to enhance its capabilities and ensure that it remains a valuable tool for data extraction and analysis from LiveLib.
